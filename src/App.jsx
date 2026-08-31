@@ -846,7 +846,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
 // ---------------------------------------------------------------------------
 
 // % représentatif de chaque mobile, pour la conversion (milieu de fourchette d'intensité)
-const PCT_MOBILE = { r1: 0.95, r6: 0.80, r10: 0.70, r15: 0.55, r25: 0.40 };
+const PCT_MOBILE = { r1: 1.00, r6: 0.80, r10: 0.70, r15: 0.55, r25: 0.40 };
 
 // Correspondance répétitions réalisées → % de charge max (tableau de conversion)
 function repsToPercent(reps) {
