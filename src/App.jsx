@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Home, Dumbbell, ListChecks, ClipboardList, History, Timer as TimerIcon,
   Plus, Trash2, Play, Pause, RotateCcw, ChevronRight, Flame, Target, Info, Calculator,
-  User, TrendingUp, Check, Share2, Copy, LogOut, Lock
+  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil
 } from "lucide-react";
 import {
   slug, loadProfil, saveProfilStorage, clearProfilStorage, loadMapping, saveMapping,
   loadClassesIndex, addClasseToIndex, registerProfil, loadHistorique, saveHistorique,
   loadStudentHistoriqueByNumero, loadSeances, saveSeances, loadStudentSeancesByNumero,
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, PROFS, findProfByPin,
+  loadAteliersPerso, saveAteliersPerso,
 } from "./storage.js";
 
 // ---------------------------------------------------------------------------
@@ -85,7 +86,9 @@ const colorMap = {
 
 const mobileById = (id) => MOBILES.find((m) => m.id === id);
 const zoneById = (id) => ZONES.find((z) => z.id === id);
-const atelierZone = (nom) => ATELIERS.find((a) => a.nom === nom)?.zone;
+// `liste` permet de résoudre la zone d'un atelier personnalisé (ajouté par
+// l'utilisateur) en plus des ateliers pré-enregistrés ci-dessus.
+const atelierZone = (nom, liste = ATELIERS) => liste.find((a) => a.nom === nom)?.zone;
 
 // ---------------------------------------------------------------------------
 // Identité élève + stockage persistant
@@ -428,9 +431,83 @@ function Mobiles() {
 // Écran : Ateliers
 // ---------------------------------------------------------------------------
 
-function Ateliers() {
+const ATELIER_VIDE = { nom: "", muscles: "", zone: ZONES[0].id };
+
+function AtelierForm({ initial, onValider, onAnnuler, erreur }) {
+  const [valeurs, setValeurs] = useState(initial || ATELIER_VIDE);
+  const champ = (k, v) => setValeurs((p) => ({ ...p, [k]: v }));
+  return (
+    <Card className="bg-neutral-900/60 border-orange-500/30">
+      <p className="text-xs uppercase tracking-widest text-orange-400 font-semibold mb-3">
+        {initial ? "Modifier l'atelier" : "Nouvel atelier"}
+      </p>
+      <div className="space-y-2">
+        <input
+          value={valeurs.nom}
+          onChange={(e) => champ("nom", e.target.value)}
+          placeholder="Nom de l'atelier"
+          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+        <input
+          value={valeurs.muscles}
+          onChange={(e) => champ("muscles", e.target.value)}
+          placeholder="Muscles concernés"
+          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+        <select
+          value={valeurs.zone}
+          onChange={(e) => champ("zone", e.target.value)}
+          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-300"
+        >
+          {ZONES.map((z) => <option key={z.id} value={z.id}>{z.label}</option>)}
+        </select>
+      </div>
+      {erreur && <p className="text-[11px] text-rose-400 mt-2">{erreur}</p>}
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={() => onValider(valeurs)}
+          className="flex-1 bg-orange-500 text-neutral-950 font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition"
+        >
+          <Check size={15} /> Enregistrer
+        </button>
+        <button
+          onClick={onAnnuler}
+          className="px-4 rounded-xl py-2.5 text-xs font-semibold text-neutral-400 bg-neutral-950 border border-neutral-800"
+        >
+          Annuler
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+function Ateliers({ ateliersPerso, onAddAtelier, onUpdateAtelier, onDeleteAtelier }) {
   const [q, setQ] = useState("");
+  const [ajoutOuvert, setAjoutOuvert] = useState(false);
+  const [editionId, setEditionId] = useState(null);
+  const [erreur, setErreur] = useState("");
+
+  const nomExiste = (nom, ignorerId) =>
+    ATELIERS.some((a) => a.nom.trim().toLowerCase() === nom.trim().toLowerCase()) ||
+    ateliersPerso.some((a) => a.id !== ignorerId && a.nom.trim().toLowerCase() === nom.trim().toLowerCase());
+
+  const validerAjout = (valeurs) => {
+    if (!valeurs.nom.trim() || !valeurs.muscles.trim()) { setErreur("Le nom et les muscles concernés sont obligatoires."); return; }
+    if (nomExiste(valeurs.nom, null)) { setErreur("Un atelier porte déjà ce nom."); return; }
+    onAddAtelier({ nom: valeurs.nom.trim(), muscles: valeurs.muscles.trim(), zone: valeurs.zone });
+    setErreur(""); setAjoutOuvert(false);
+  };
+
+  const validerEdition = (id, valeurs) => {
+    if (!valeurs.nom.trim() || !valeurs.muscles.trim()) { setErreur("Le nom et les muscles concernés sont obligatoires."); return; }
+    if (nomExiste(valeurs.nom, id)) { setErreur("Un atelier porte déjà ce nom."); return; }
+    onUpdateAtelier(id, { nom: valeurs.nom.trim(), muscles: valeurs.muscles.trim(), zone: valeurs.zone });
+    setErreur(""); setEditionId(null);
+  };
+
   const filtered = ATELIERS.filter(a => a.nom.toLowerCase().includes(q.toLowerCase()) || a.muscles.toLowerCase().includes(q.toLowerCase()));
+  const filteredPerso = ateliersPerso.filter(a => a.nom.toLowerCase().includes(q.toLowerCase()) || a.muscles.toLowerCase().includes(q.toLowerCase()));
+
   return (
     <div className="px-5 pb-6 space-y-3">
       <input
@@ -439,6 +516,51 @@ function Ateliers() {
         placeholder="Chercher un atelier ou un muscle…"
         className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
       />
+
+      {!ajoutOuvert && (
+        <button
+          onClick={() => { setAjoutOuvert(true); setEditionId(null); setErreur(""); }}
+          className="w-full bg-neutral-900 border border-dashed border-orange-500/40 text-orange-400 font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition"
+        >
+          <Plus size={16} /> Ajouter un atelier
+        </button>
+      )}
+      {ajoutOuvert && (
+        <AtelierForm onValider={validerAjout} onAnnuler={() => { setAjoutOuvert(false); setErreur(""); }} erreur={erreur} />
+      )}
+
+      {filteredPerso.map((a) => (
+        editionId === a.id ? (
+          <AtelierForm
+            key={a.id}
+            initial={a}
+            onValider={(v) => validerEdition(a.id, v)}
+            onAnnuler={() => { setEditionId(null); setErreur(""); }}
+            erreur={erreur}
+          />
+        ) : (
+          <Card key={a.id} className="flex items-center justify-between border-orange-500/30">
+            <div>
+              <p className="font-semibold text-neutral-100">{a.nom}</p>
+              <p className="text-xs text-neutral-500 mt-0.5">{a.muscles}</p>
+              <p className="text-[10px] text-orange-400 mt-1 uppercase tracking-wide">Atelier perso · {zoneById(a.zone)?.label}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              <button onClick={() => { setEditionId(a.id); setAjoutOuvert(false); setErreur(""); }} className="text-neutral-500 p-1">
+                <Pencil size={16} />
+              </button>
+              <button onClick={() => onDeleteAtelier(a.id)} className="text-rose-400 p-1">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </Card>
+        )
+      ))}
+
+      {filteredPerso.length > 0 && filtered.length > 0 && (
+        <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold pt-2">Ateliers pré-enregistrés</p>
+      )}
+
       {filtered.map((a) => (
         <Card key={a.nom} className="flex items-center justify-between">
           <div>
@@ -456,7 +578,7 @@ function Ateliers() {
 // Écran : Projet individuel
 // ---------------------------------------------------------------------------
 
-function Projet({ project, setProject }) {
+function Projet({ project, setProject, ateliersTous }) {
   const toggleAtelier = (nom) => {
     setProject((p) => {
       const exists = p.ateliers.includes(nom);
@@ -534,7 +656,7 @@ function Projet({ project, setProject }) {
                   {m && <span className="text-[10px] text-neutral-500">— objectif {m.label}</span>}
                 </div>
                 <div className="space-y-1.5">
-                  {ATELIERS.filter((a) => a.zone === z.id).map((a) => {
+                  {ateliersTous.filter((a) => a.zone === z.id).map((a) => {
                     const active = project.ateliers.includes(a.nom);
                     return (
                       <button
@@ -599,7 +721,7 @@ function derniereMoyenne(seancesHistorique, atelier) {
   return null;
 }
 
-function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
+function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, ateliersTous }) {
   const [rows, setRows] = useState([{ atelier: project.ateliers[0] || "", series: [{ charge: "", reps: "" }], ressenti: "" }]);
   const [rpe, setRpe] = useState(5);
   const [duree, setDuree] = useState(90);
@@ -630,7 +752,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
       const s = statsRow(row);
       return {
         atelier: row.atelier,
-        zone: atelierZone(row.atelier),
+        zone: atelierZone(row.atelier, ateliersTous),
         nbSeries: s.nb,
         chargeMoyenne: Math.round(s.chargeMoy * 10) / 10,
         repsMoyenne: Math.round(s.repsMoy * 10) / 10,
@@ -668,7 +790,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
           <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-3">Ateliers travaillés</p>
           <div className="space-y-4">
             {rows.map((row, i) => {
-              const zone = atelierZone(row.atelier);
+              const zone = atelierZone(row.atelier, ateliersTous);
               const z = zone ? zoneById(zone) : null;
               const mId = zone ? project.mobiles[zone] : null;
               const m = mId ? mobileById(mId) : null;
@@ -683,7 +805,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
                       className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-2 text-[11px] text-neutral-300"
                     >
                       <option value="">Atelier…</option>
-                      {ATELIERS.map((a) => <option key={a.nom} value={a.nom}>{a.nom}</option>)}
+                      {ateliersTous.map((a) => <option key={a.nom} value={a.nom}>{a.nom}</option>)}
                     </select>
                     <button onClick={() => removeRow(i)} className="text-neutral-600 px-1">
                       <Trash2 size={14} />
@@ -846,7 +968,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance }) {
 // ---------------------------------------------------------------------------
 
 // % représentatif de chaque mobile, pour la conversion (milieu de fourchette d'intensité)
-const PCT_MOBILE = { r1: 1.00, r6: 0.80, r10: 0.70, r15: 0.55, r25: 0.40 };
+const PCT_MOBILE = { r1: 0.95, r6: 0.80, r10: 0.70, r15: 0.55, r25: 0.40 };
 
 // Correspondance répétitions réalisées → % de charge max (tableau de conversion)
 function repsToPercent(reps) {
@@ -1017,7 +1139,7 @@ function EssaiForm({ atelier, zone, mobileZoneId, onValider, onAnnuler }) {
   );
 }
 
-function Suivi({ project, profil, historique, onNouvelleEntree }) {
+function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) {
   const [atelierOuvert, setAtelierOuvert] = useState(null);
   const ateliersProjet = project.ateliers.length > 0 ? project.ateliers : [];
   const entriesFor = (atelier) => historique.filter((h) => h.atelier === atelier);
@@ -1038,7 +1160,7 @@ function Suivi({ project, profil, historique, onNouvelleEntree }) {
       )}
 
       {ateliersProjet.map((atelier) => {
-        const zone = atelierZone(atelier);
+        const zone = atelierZone(atelier, ateliersTous);
         const z = zone ? zoneById(zone) : null;
         const mobileZoneId = zone ? project?.mobiles?.[zone] : null;
         const entries = entriesFor(atelier);
@@ -1513,14 +1635,46 @@ export default function MuscuPro() {
   const [historique, setHistorique] = useState([]);
   const [seancesHistorique, setSeancesHistorique] = useState([]);
   const [projetCharge, setProjetCharge] = useState(false);
+  const [ateliersPerso, setAteliersPerso] = useState([]);
 
   useEffect(() => {
     (async () => {
       const p = await loadProfil();
       setProfil(p);
       setProfilLoaded(true);
+      const perso = await loadAteliersPerso();
+      setAteliersPerso(perso);
     })();
   }, []);
+
+  // Ateliers pré-enregistrés + ateliers ajoutés par l'utilisateur, utilisés
+  // partout où un atelier peut être choisi (Projet, Suivi, Séances). Les
+  // ateliers perso vivent uniquement en local (voir storage.js) : ils
+  // n'affectent jamais la liste commune vue par les autres élèves/profs.
+  const ateliersTous = [...ateliersPerso, ...ATELIERS];
+
+  const handleAddAtelier = (a) => {
+    const nouvel = { ...a, id: `perso-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, perso: true };
+    setAteliersPerso((prev) => {
+      const next = [...prev, nouvel];
+      saveAteliersPerso(next);
+      return next;
+    });
+  };
+  const handleUpdateAtelier = (id, updates) => {
+    setAteliersPerso((prev) => {
+      const next = prev.map((a) => (a.id === id ? { ...a, ...updates } : a));
+      saveAteliersPerso(next);
+      return next;
+    });
+  };
+  const handleDeleteAtelier = (id) => {
+    setAteliersPerso((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      saveAteliersPerso(next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!profil || profil.type !== "eleve") return;
@@ -1633,10 +1787,17 @@ export default function MuscuPro() {
         <div className="flex-1 overflow-y-auto pt-4">
           {tab === "accueil" && <Accueil setTab={setTab} sessions={seancesHistorique} project={project} profil={profil} onEditProfil={() => setEditing(true)} onDeconnexion={handleDeconnexion} />}
           {tab === "mobiles" && <Mobiles />}
-          {tab === "ateliers" && <Ateliers />}
-          {tab === "projet" && <Projet project={project} setProject={setProject} />}
-          {tab === "seance" && <SeanceHistorique project={project} seancesHistorique={seancesHistorique} onNouvelleSeance={handleNouvelleSeance} />}
-          {tab === "suivi" && <Suivi project={project} profil={profil} historique={historique} onNouvelleEntree={handleNouvelleEntree} />}
+          {tab === "ateliers" && (
+            <Ateliers
+              ateliersPerso={ateliersPerso}
+              onAddAtelier={handleAddAtelier}
+              onUpdateAtelier={handleUpdateAtelier}
+              onDeleteAtelier={handleDeleteAtelier}
+            />
+          )}
+          {tab === "projet" && <Projet project={project} setProject={setProject} ateliersTous={ateliersTous} />}
+          {tab === "seance" && <SeanceHistorique project={project} seancesHistorique={seancesHistorique} onNouvelleSeance={handleNouvelleSeance} ateliersTous={ateliersTous} />}
+          {tab === "suivi" && <Suivi project={project} profil={profil} historique={historique} onNouvelleEntree={handleNouvelleEntree} ateliersTous={ateliersTous} />}
           {tab === "convert" && <Convertisseur />}
           {tab === "chrono" && <ChronoRecup />}
         </div>

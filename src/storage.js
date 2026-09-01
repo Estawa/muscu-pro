@@ -64,6 +64,23 @@ export async function saveProfilStorage(p) {
   try { localStorage.setItem("muscupro_profil", JSON.stringify(p)); } catch (e) {}
 }
 
+// ---------- Ateliers personnalisés (localStorage, propres à l'appareil) ----------
+//
+// Ajoutés par l'élève/utilisateur en plus des ateliers pré-enregistrés de la
+// salle. Stockés uniquement en local (comme le profil) : chaque appareil a
+// sa propre liste, ce qui permet un usage personnel hors de l'établissement
+// sans jamais modifier la liste commune utilisée au lycée.
+
+export async function loadAteliersPerso() {
+  try {
+    const raw = localStorage.getItem("muscupro_ateliers_perso");
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+export async function saveAteliersPerso(list) {
+  try { localStorage.setItem("muscupro_ateliers_perso", JSON.stringify(list)); } catch (e) {}
+}
+
 // ---------- Mapping numéro <-> nom (Firestore, par prof + classe) ----------
 
 export async function loadMapping(prof, classe) {
