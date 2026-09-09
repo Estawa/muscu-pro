@@ -198,8 +198,12 @@ function Identification({ onValidateEleve, onValidateProf, initial }) {
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-6">
-      {mode === "eleve" ? (
-        <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm">
+        <div className="mb-6">
+          <PartagerApp />
+        </div>
+        {mode === "eleve" ? (
+        <div className="w-full">
           <button onClick={() => setMode("prof")} className="w-full mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-400/80 bg-orange-500/5 border border-orange-500/20 rounded-xl py-2.5">
             Tu es professeur ? Connexion ici →
           </button>
@@ -245,13 +249,14 @@ function Identification({ onValidateEleve, onValidateProf, initial }) {
           <p className="text-[10px] text-neutral-600 text-center mt-4">Tes séances sont enregistrées de façon anonyme (par numéro) pour ton suivi et ta notation de cycle — ton nom n'est jamais visible des autres élèves.</p>
         </div>
       ) : (
-        <div className="w-full max-w-sm">
+        <div className="w-full">
           <ConnexionProf onValidate={onValidateProf} />
           <button onClick={() => setMode("eleve")} className="w-full mt-6 text-center text-xs font-semibold text-neutral-600">
             ← Je suis élève
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
