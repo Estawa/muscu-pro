@@ -270,6 +270,14 @@ function PartagerApp() {
     } catch (e) {}
   };
 
+  const partager = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: "Muscu Pro", text: "Application de suivi de musculation", url }); } catch (e) { /* annulé */ }
+    } else {
+      copier();
+    }
+  };
+
   return (
     <Card>
       <button onClick={() => setOuvert((o) => !o)} className="w-full flex items-center justify-between">
@@ -288,10 +296,13 @@ function PartagerApp() {
             <img src={qrSrc} alt="QR code de l'appli" width={160} height={160} />
           </div>
           <p className="text-xs text-neutral-400 text-center break-all px-2">{url || "Adresse disponible une fois l'appli déployée"}</p>
+          <button onClick={partager} className="w-full bg-orange-500 text-neutral-950 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
+            <Share2 size={13} /> Partager le lien
+          </button>
           <button onClick={copier} className="w-full bg-neutral-800 text-neutral-200 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
             {copie ? <><Check size={13} /> Lien copié</> : <><Copy size={13} /> Copier le lien</>}
           </button>
-          <p className="text-[10px] text-neutral-600 text-center">Fais scanner ce code ou transmets le lien pour que chaque élève installe l'appli sur son téléphone.</p>
+          <p className="text-[10px] text-neutral-600 text-center">Fais scanner ce code, partage le lien via ta messagerie préférée, ou transmets-le pour que chaque élève installe l'appli sur son téléphone.</p>
         </div>
       )}
     </Card>
@@ -1357,6 +1368,7 @@ function ProfEspace({ profNom, onDeconnexion }) {
               <p className="text-xs text-neutral-400 leading-relaxed">Connecté en tant que <span className="text-neutral-200 font-semibold">{profConnecte.nom}</span>. Choisis la classe que tu veux observer.</p>
             </div>
           </Card>
+          <PartagerApp />
           <button onClick={rafraichirClasses} disabled={rafraichissement} className="w-full flex items-center justify-center gap-2 bg-neutral-900 border border-neutral-800 rounded-xl py-2.5 text-xs font-bold text-neutral-400">
             <RotateCcw size={13} className={rafraichissement ? "animate-spin" : ""} /> {rafraichissement ? "Actualisation…" : "Actualiser les classes"}
           </button>
