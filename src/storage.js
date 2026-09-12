@@ -20,20 +20,26 @@ import { db } from "./firebase.js";
 //   seances/{profSlug-classeSlug-numero}     { entries: [...] }   (séances)
 // ---------------------------------------------------------------------------
 
-// Liste des professeurs autorisés à utiliser le Mode professeur, chacun avec
-// son propre code d'accès. Configurable via VITE_PROFS (JSON), ex. :
-// VITE_PROFS=[{"nom":"C. Guilhem","pin":"2025"},{"nom":"Collègue","pin":"1234"}]
-export const PROFS = (() => {
+// Liste des professeurs autorisés à utiliser le Mode professeur (administrateur + collègues
+// ajoutés dynamiquement depuis l'onglet Accès), stockée sur Firestore — remplace l'ancienne
+// configuration statique par variable d'environnement VITE_PROFS.
+export async function loadAcces() {
   try {
-    const raw = import.meta.env.VITE_PROFS;
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    const snap = await getDoc(doc(db, "meta", "acces"));
+    if (snap.exists()) {
+      const d = snap.data();
+      return {
+        pinAdmin: d.pinAdmin || "2025",
+        nomAdmin: d.nomAdmin || "Mr Guilhem",
+        collegues: Array.isArray(d.collegues) ? d.collegues : [],
+      };
+    }
   } catch (e) {}
-  return [{ nom: "Professeur", pin: "2025" }];
-})();
+  return { pinAdmin: "2025", nomAdmin: "Mr Guilhem", collegues: [] };
+}
 
-export function findProfByPin(pin) {
-  return PROFS.find((p) => p.pin === pin) || null;
+export async function saveAcces(config) {
+  try { await setDoc(doc(db, "meta", "acces"), config); } catch (e) {}
 }
 
 export function slug(s) {

@@ -8,7 +8,7 @@ import {
   slug, loadProfil, saveProfilStorage, clearProfilStorage, loadMapping, saveMapping,
   loadClassesIndex, addClasseToIndex, registerProfil, loadHistorique, saveHistorique,
   loadStudentHistoriqueByNumero, loadSeances, saveSeances, loadStudentSeancesByNumero,
-  loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, PROFS, findProfByPin,
+  loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
   loadAteliersPerso, saveAteliersPerso,
 } from "./storage.js";
 
@@ -130,14 +130,14 @@ function Card({ children, className = "" }) {
 // Écran : Accueil
 // ---------------------------------------------------------------------------
 
-function ConnexionProf({ onValidate }) {
-  const [profChoisi, setProfChoisi] = useState(PROFS.length === 1 ? PROFS[0].nom : "");
+function ConnexionProf({ onValidate, profs }) {
+  const [profChoisi, setProfChoisi] = useState(profs.length === 1 ? profs[0].nom : "");
   const [pin, setPin] = useState("");
   const [erreur, setErreur] = useState(false);
   const pret = profChoisi && pin;
 
   const valider = () => {
-    const trouve = findProfByPin(pin);
+    const trouve = profs.find((p) => p.pin === pin);
     if (trouve && trouve.nom === profChoisi) {
       setErreur(false);
       onValidate({ type: "prof", nom: trouve.nom });
@@ -159,7 +159,7 @@ function ConnexionProf({ onValidate }) {
         <div>
           <p className="text-xs text-neutral-500 mb-1.5 px-1">Ton nom</p>
           <div className="space-y-1.5">
-            {PROFS.map((p) => (
+            {profs.map((p) => (
               <button
                 key={p.nom}
                 onClick={() => { setProfChoisi(p.nom); setErreur(false); }}
@@ -188,12 +188,12 @@ function ConnexionProf({ onValidate }) {
   );
 }
 
-function Identification({ onValidateEleve, onValidateProf, initial }) {
+function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
   const [mode, setMode] = useState("eleve"); // "eleve" | "prof"
   const [nom, setNom] = useState(initial?.nom || "");
   const [prenom, setPrenom] = useState(initial?.prenom || "");
   const [classe, setClasse] = useState(initial?.classe || "");
-  const [prof, setProf] = useState(initial?.prof || (PROFS.length === 1 ? PROFS[0].nom : ""));
+  const [prof, setProf] = useState(initial?.prof || (profs.length === 1 ? profs[0].nom : ""));
   const pret = nom.trim() && prenom.trim() && classe.trim() && prof;
 
   return (
@@ -222,11 +222,11 @@ function Identification({ onValidateEleve, onValidateProf, initial }) {
             <input value={classe} onChange={(e) => setClasse(e.target.value)} placeholder="Classe (ex : 1G3)"
               className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
 
-            {PROFS.length > 1 && (
+            {profs.length > 1 && (
               <div>
                 <p className="text-xs text-neutral-500 mb-1.5 px-1">Ton professeur d'EPS</p>
                 <div className="space-y-1.5">
-                  {PROFS.map((p) => (
+                  {profs.map((p) => (
                     <button
                       key={p.nom}
                       onClick={() => setProf(p.nom)}
@@ -250,7 +250,7 @@ function Identification({ onValidateEleve, onValidateProf, initial }) {
         </div>
       ) : (
         <div className="w-full">
-          <ConnexionProf onValidate={onValidateProf} />
+          <ConnexionProf onValidate={onValidateProf} profs={profs} />
           <button onClick={() => setMode("eleve")} className="w-full mt-6 text-center text-xs font-semibold text-neutral-600">
             ← Je suis élève
           </button>
@@ -1236,10 +1236,172 @@ function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) 
 }
 
 // ---------------------------------------------------------------------------
+// Écran : Accès — gestion dynamique de l'administrateur et des collègues
+// (remplace l'ancienne configuration statique VITE_PROFS)
+// ---------------------------------------------------------------------------
+
+function decomposeCivilite(valeur) {
+  const m = /^(Mr|Mme)\s+(.*)$/.exec(valeur || "");
+  return m ? { civilite: m[1], nom: m[2] } : { civilite: "Mr", nom: valeur || "" };
+}
+
+function ChampNomAdmin({ nomAdmin, onChanger }) {
+  const [edition, setEdition] = useState(false);
+  const d0 = decomposeCivilite(nomAdmin);
+  const [civilite, setCivilite] = useState(d0.civilite);
+  const [valeur, setValeur] = useState(d0.nom);
+
+  const valider = () => {
+    if (!valeur.trim()) return;
+    onChanger(`${civilite} ${valeur.trim()}`);
+    setEdition(false);
+  };
+
+  if (!edition) {
+    return (
+      <button onClick={() => { const d = decomposeCivilite(nomAdmin); setCivilite(d.civilite); setValeur(d.nom); setEdition(true); }} className="flex items-center gap-1.5 text-xs text-neutral-400">
+        <Pencil size={12} /> Nom affiché aux élèves : <span className="font-bold text-neutral-200">{nomAdmin}</span>
+      </button>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1.5 text-sm text-neutral-100">
+        <option value="Mr">Mr</option>
+        <option value="Mme">Mme</option>
+      </select>
+      <input value={valeur} onChange={(e) => setValeur(e.target.value)} autoFocus className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm text-neutral-100" />
+      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={13} /></button>
+      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+    </div>
+  );
+}
+
+function ChampPinAdmin({ pin, onChanger }) {
+  const [edition, setEdition] = useState(false);
+  const [valeur, setValeur] = useState("");
+  const valider = () => {
+    if (!/^\d{4,6}$/.test(valeur)) return;
+    onChanger(valeur);
+    setEdition(false);
+    setValeur("");
+  };
+  if (!edition) {
+    return (
+      <button onClick={() => setEdition(true)} className="flex items-center gap-1.5 text-xs text-neutral-400">
+        <Lock size={12} /> Code d'accès : <span className="font-bold text-neutral-200">{pin}</span> · modifier
+      </button>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <input value={valeur} onChange={(e) => setValeur(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-32 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm text-neutral-100" />
+      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={13} /></button>
+      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+    </div>
+  );
+}
+
+function AccesTab({ acces, onSauver }) {
+  const [civilite, setCivilite] = useState("Mr");
+  const [nom, setNom] = useState("");
+  const [pin, setPin] = useState("");
+  const [erreur, setErreur] = useState("");
+  const [pinVisible, setPinVisible] = useState(null);
+  const collegues = acces.collegues || [];
+
+  const ajouter = () => {
+    setErreur("");
+    if (!nom.trim()) { setErreur("Indique le nom du collègue."); return; }
+    if (!/^\d{4,6}$/.test(pin)) { setErreur("Le code doit contenir de 4 à 6 chiffres."); return; }
+    const dejaPris = pin === acces.pinAdmin || collegues.some((c) => c.pin === pin);
+    if (dejaPris) { setErreur("Ce code est déjà utilisé, choisis-en un autre."); return; }
+    onSauver({ ...acces, collegues: [...collegues, { nom: `${civilite} ${nom.trim()}`, pin }] });
+    setNom(""); setPin("");
+  };
+
+  const retirer = (c) => {
+    if (!confirm(`Retirer l'accès de ${c.nom} ? Ses classes et données déjà enregistrées seront conservées mais ne seront plus accessibles que depuis "Vue globale".`)) return;
+    onSauver({ ...acces, collegues: collegues.filter((x) => x.nom !== c.nom) });
+  };
+
+  const reinitPin = (nomCollegue, nouveauPin) => {
+    onSauver({ ...acces, collegues: collegues.map((c) => (c.nom === nomCollegue ? { ...c, pin: nouveauPin } : c)) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-3">Mon accès (administrateur)</p>
+        <div className="space-y-2">
+          <ChampNomAdmin nomAdmin={acces.nomAdmin} onChanger={(n) => onSauver({ ...acces, nomAdmin: n })} />
+          <ChampPinAdmin pin={acces.pinAdmin} onChanger={(p) => onSauver({ ...acces, pinAdmin: p })} />
+        </div>
+      </Card>
+
+      <div>
+        <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-2">Collègues autorisés</p>
+        <p className="text-xs text-neutral-500 mb-3">Chacun a sa propre base (classes, élèves, séances), totalement séparée de la tienne. Toi seul peux consulter l'espace d'un collègue, depuis "Vue globale".</p>
+        <Card>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-2 text-sm text-neutral-100">
+                <option value="Mr">Mr</option>
+                <option value="Mme">Mme</option>
+              </select>
+              <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du collègue" className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-100" />
+            </div>
+            <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} placeholder="Code PIN (4 à 6 chiffres)" className="bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-100" />
+            <button onClick={ajouter} className="bg-orange-500 text-neutral-950 font-bold rounded-lg py-2 text-sm">Ajouter</button>
+            {erreur && <p className="text-xs text-rose-400">{erreur}</p>}
+          </div>
+        </Card>
+      </div>
+
+      {collegues.length === 0 ? (
+        <p className="text-sm text-neutral-500">Aucun collègue ajouté pour l'instant.</p>
+      ) : (
+        <div className="space-y-2">
+          {collegues.map((c) => (
+            <Card key={c.nom} className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-sm font-bold text-neutral-100">{c.nom}</p>
+                <button onClick={() => setPinVisible(pinVisible === c.nom ? null : c.nom)} className="text-xs text-neutral-500 mt-0.5">
+                  Code : {pinVisible === c.nom ? c.pin : "••••"}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ReinitPinCollegue nomCollegue={c.nom} onReinit={reinitPin} />
+                <button onClick={() => retirer(c)} className="text-[11px] font-bold text-rose-400 border border-rose-500/30 rounded-full px-2.5 py-1">Retirer</button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReinitPinCollegue({ nomCollegue, onReinit }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [pin, setPin] = useState("");
+  if (!ouvert) {
+    return <button onClick={() => setOuvert(true)} className="text-[11px] font-bold text-neutral-400 border border-neutral-800 rounded-full px-2.5 py-1">Réinitialiser le PIN</button>;
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-24 bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-xs text-neutral-100" />
+      <button onClick={() => { if (/^\d{4,6}$/.test(pin)) { onReinit(nomCollegue, pin); setOuvert(false); setPin(""); } }} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={12} /></button>
+      <button onClick={() => setOuvert(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Écran : Mode professeur — PIN, sélection de classe, correspondance numéro → nom
 // ---------------------------------------------------------------------------
 
-function ProfEspace({ profNom, onDeconnexion }) {
+function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [pin, setPin] = useState("");
   const [profConnecte, setProfConnecte] = useState(profNom ? { nom: profNom } : null);
   const [erreur, setErreur] = useState(false);
@@ -1261,7 +1423,7 @@ function ProfEspace({ profNom, onDeconnexion }) {
   }, [profNom]);
 
   const valider = async () => {
-    const p = findProfByPin(pin);
+    const p = profs.find((x) => x.pin === pin);
     if (p) { setProfConnecte(p); setErreur(false); const c = await loadClassesIndex(p.nom); setClasses(c); }
     else setErreur(true);
   };
@@ -1653,6 +1815,15 @@ export default function MuscuPro() {
   const [seancesHistorique, setSeancesHistorique] = useState([]);
   const [projetCharge, setProjetCharge] = useState(false);
   const [ateliersPerso, setAteliersPerso] = useState([]);
+  const [acces, setAcces] = useState({ pinAdmin: "2025", nomAdmin: "Mr Guilhem", collegues: [] });
+  const [profTab, setProfTab] = useState("mes-classes"); // "mes-classes" | "globale" | "acces"
+  const [collegueVu, setCollegueVu] = useState("");
+
+  useEffect(() => {
+    loadAcces().then(setAcces);
+  }, []);
+
+  const profsDyn = [{ nom: acces.nomAdmin, pin: acces.pinAdmin }, ...(acces.collegues || [])];
 
   useEffect(() => {
     (async () => {
@@ -1773,20 +1944,69 @@ export default function MuscuPro() {
         onValidateEleve={handleValiderEleve}
         onValidateProf={handleValiderProf}
         initial={editing && profil && profil.type === "eleve" ? profil : null}
+        profs={profsDyn}
       />
     );
   }
 
   // ---- Connecté en tant que professeur : espace dédié, sans onglets élève ----
   if (profil.type === "prof") {
+    const estAdmin = profil.nom === acces.nomAdmin;
     return (
       <div className="min-h-screen bg-neutral-950 flex justify-center">
         <div className="w-full max-w-sm bg-neutral-950 min-h-screen flex flex-col">
           <div className="sticky top-0 z-10 bg-neutral-950/95 backdrop-blur border-b border-neutral-900">
             <Header title="Mode professeur" subtitle="Correspondance numéro ↔ nom" />
           </div>
+          {estAdmin && (
+            <div className="flex gap-2 px-5 pb-3 overflow-x-auto">
+              {[
+                { id: "mes-classes", label: "Mes classes" },
+                { id: "globale", label: "Vue globale" },
+                { id: "acces", label: "Accès" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setProfTab(t.id)}
+                  className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border transition ${profTab === t.id ? "bg-orange-500 text-neutral-950 border-orange-500" : "border-neutral-800 text-neutral-400"}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto pt-4">
-            <ProfEspace profNom={profil.nom} onDeconnexion={handleDeconnexion} />
+            {!estAdmin && (
+              <ProfEspace profNom={profil.nom} onDeconnexion={handleDeconnexion} profs={profsDyn} />
+            )}
+            {estAdmin && profTab === "mes-classes" && (
+              <ProfEspace profNom={profil.nom} onDeconnexion={handleDeconnexion} profs={profsDyn} />
+            )}
+            {estAdmin && profTab === "globale" && (
+              <div className="px-5 space-y-4">
+                <select
+                  value={collegueVu}
+                  onChange={(e) => setCollegueVu(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100"
+                >
+                  <option value="" disabled>Choisir un collègue...</option>
+                  {(acces.collegues || []).map((c) => (
+                    <option key={c.nom} value={c.nom}>{c.nom}</option>
+                  ))}
+                </select>
+                {(acces.collegues || []).length === 0 && (
+                  <p className="text-xs text-neutral-500">Aucun collègue ajouté pour l'instant (onglet Accès).</p>
+                )}
+                {collegueVu && (
+                  <ProfEspace key={collegueVu} profNom={collegueVu} profs={profsDyn} />
+                )}
+              </div>
+            )}
+            {estAdmin && profTab === "acces" && (
+              <div className="px-5">
+                <AccesTab acces={acces} onSauver={(next) => { setAcces(next); saveAcces(next); }} />
+              </div>
+            )}
           </div>
         </div>
       </div>
