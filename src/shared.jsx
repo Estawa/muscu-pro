@@ -131,6 +131,67 @@ export function playGong(ctx, times = 1, gap = 380) {
   for (let i = 0; i < times; i++) setTimeout(() => playSingleGong(ctx), i * gap);
 }
 
+// Gong de départ d'un run (entrée en phase de travail) : clair, énergique, plutôt aigu.
+export function playGongStart(ctx) {
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(ctx.destination);
+  [220, 330].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    g.gain.value = 0.55;
+    osc.connect(g);
+    g.connect(master);
+    osc.start(now);
+    g.gain.setValueAtTime(0.55, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.5 + i * 0.05);
+    osc.stop(now + 0.6);
+  });
+  const strike = ctx.createOscillator();
+  const strikeGain = ctx.createGain();
+  strike.type = "square";
+  strike.frequency.value = 1400;
+  strikeGain.gain.value = 0.3;
+  strike.connect(strikeGain);
+  strikeGain.connect(master);
+  strike.start(now);
+  strikeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  strike.stop(now + 0.12);
+}
+
+// Gong de fin d'un run (entrée en récupération) : grave, posé, plus long.
+export function playGongStop(ctx) {
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(ctx.destination);
+  [80, 120].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    g.gain.value = 0.6;
+    osc.connect(g);
+    g.connect(master);
+    osc.start(now);
+    g.gain.setValueAtTime(0.6, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.8 + i * 0.15);
+    osc.stop(now + 2.0);
+  });
+}
+
+// Point sur le cadran (cercle de rayon r centré sur cx,cy) pour un angle d'aiguille donné
+// (0° = tout en haut, sens horaire positif). Partagé par les cadrans du mode Simple et Full Power.
+export function gaugePoint(angleDeg, r = 85, cx = 100, cy = 100) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+}
+
 export function playBeep(ctx, freq, duration = 0.09, gain = 0.15) {
   if (!ctx) return;
   const osc = ctx.createOscillator();

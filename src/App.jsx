@@ -2,15 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Home, Dumbbell, ListChecks, ClipboardList, History, Timer as TimerIcon,
   Plus, Trash2, Play, Pause, RotateCcw, ChevronRight, Flame, Target, Info, Calculator,
-  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil
+  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil, Upload
 } from "lucide-react";
 import {
   slug, loadProfil, saveProfilStorage, clearProfilStorage, loadMapping, saveMapping,
   loadClassesIndex, addClasseToIndex, registerProfil, loadHistorique, saveHistorique,
   loadStudentHistoriqueByNumero, loadSeances, saveSeances, loadStudentSeancesByNumero,
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
-  loadAteliersPerso, saveAteliersPerso,
+  loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
 } from "./storage.js";
+import ImportEleves from "./ImportEleves.jsx";
 
 // ---------------------------------------------------------------------------
 // Données de référence (issues de la programmation)
@@ -188,6 +189,183 @@ function ConnexionProf({ onValidate, profs }) {
   );
 }
 
+function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
+  const [prof, setProf] = useState(profs.length === 1 ? profs[0].nom : "");
+  const [classes, setClasses] = useState(null); // null = pas encore chargé pour ce prof
+  const [classe, setClasse] = useState("");
+  const [mapping, setMapping] = useState([]);
+  const [numero, setNumero] = useState("");
+  const [prenomManuel, setPrenomManuel] = useState("");
+  const [nomManuel, setNomManuel] = useState("");
+  const [classeManuelle, setClasseManuelle] = useState("");
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [erreur, setErreur] = useState("");
+
+  useEffect(() => {
+    if (!prof) { setClasses(null); return; }
+    let annule = false;
+    setClasses(null);
+    setClasse(""); setNumero(""); setMapping([]);
+    loadClassesIndex(prof).then((c) => { if (!annule) setClasses(c); });
+    return () => { annule = true; };
+  }, [prof]);
+
+  useEffect(() => {
+    if (!classe) { setMapping([]); return; }
+    let annule = false;
+    loadMapping(prof, classe).then((m) => {
+      if (annule) return;
+      setMapping(m.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr")));
+    });
+    return () => { annule = true; };
+  }, [classe]);
+
+  const aDesClasses = classes !== null && classes.length > 0;
+  const eleveSelectionne = numero ? mapping.find((m) => String(m.numero) === String(numero)) : null;
+  const premierePinEnCours = !!eleveSelectionne && !eleveSelectionne.pin;
+
+  const identitePrete = prof && classes !== null && (
+    aDesClasses ? !!numero : (prenomManuel.trim() && nomManuel.trim() && classeManuelle.trim())
+  );
+
+  async function valider() {
+    if (!/^\d{4,6}$/.test(pin)) { setErreur("Choisis un code à 4 chiffres minimum."); return; }
+
+    if (aDesClasses) {
+      if (premierePinEnCours) {
+        if (pin !== pinConfirm) { setErreur("Les deux codes ne correspondent pas."); setPinConfirm(""); return; }
+        await definirPinEleve(prof, classe, eleveSelectionne.numero, pin);
+        onValidateEleve({ type: "eleve", nom: eleveSelectionne.nom, prenom: eleveSelectionne.prenom, classe, prof, numero: eleveSelectionne.numero });
+      } else if (verifierPinEleve(mapping, eleveSelectionne.numero, pin)) {
+        onValidateEleve({ type: "eleve", nom: eleveSelectionne.nom, prenom: eleveSelectionne.prenom, classe, prof, numero: eleveSelectionne.numero });
+      } else {
+        setErreur("Code incorrect."); setPin("");
+      }
+    } else {
+      if (pin !== pinConfirm) { setErreur("Les deux codes ne correspondent pas."); setPinConfirm(""); return; }
+      const classeSaisie = classeManuelle.trim().toUpperCase();
+      const next = await appliquerImportClasse(prof, classeSaisie, [{ nom: nomManuel.trim(), prenom: prenomManuel.trim() }], "ajouter");
+      const cree = next.find((m) => slug(m.nom) === slug(nomManuel) && slug(m.prenom) === slug(prenomManuel));
+      await definirPinEleve(prof, classeSaisie, cree.numero, pin);
+      onValidateEleve({ type: "eleve", nom: nomManuel.trim(), prenom: prenomManuel.trim(), classe: classeSaisie, prof, numero: cree.numero });
+    }
+  }
+
+  return (
+    <div className="w-full">
+      <button onClick={onModeProf} className="w-full mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-400/80 bg-orange-500/5 border border-orange-500/20 rounded-xl py-2.5">
+        Tu es professeur ? Connexion ici →
+      </button>
+      <div className="text-center mb-8">
+        <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
+          <User size={26} className="text-orange-400" />
+        </div>
+        <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Qui es-tu ?</h1>
+        <p className="text-sm text-neutral-500 mt-1">Pour que ton professeur puisse suivre ta progression</p>
+      </div>
+
+      {erreur && <p className="text-xs text-rose-400 text-center mb-3">{erreur}</p>}
+
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs text-neutral-500 mb-1.5 px-1">Ton professeur d'EPS</p>
+          <select
+            value={prof}
+            onChange={(e) => setProf(e.target.value)}
+            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="" disabled>Sélectionne ton professeur...</option>
+            {profs.map((p) => (
+              <option key={p.nom} value={p.nom}>{p.nom}</option>
+            ))}
+          </select>
+        </div>
+
+        {prof && classes === null && <p className="text-sm text-neutral-500">Chargement des classes...</p>}
+
+        {prof && aDesClasses && (
+          <>
+            <div>
+              <p className="text-xs text-neutral-500 mb-1.5 px-1">Ta classe</p>
+              <select
+                value={classe}
+                onChange={(e) => setClasse(e.target.value)}
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="" disabled>Sélectionne ta classe...</option>
+                {classes.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            {classe && (
+              <div>
+                <p className="text-xs text-neutral-500 mb-1.5 px-1">Ton nom</p>
+                <select
+                  value={numero}
+                  onChange={(e) => { setNumero(e.target.value); setPin(""); setPinConfirm(""); setErreur(""); }}
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="" disabled>Sélectionne ton nom...</option>
+                  {mapping.map((m) => (
+                    <option key={m.numero} value={m.numero}>{m.prenom} {m.nom}</option>
+                  ))}
+                </select>
+                {mapping.length === 0 && <p className="text-xs text-neutral-600 mt-1">Aucun élève enregistré dans cette classe pour l'instant.</p>}
+              </div>
+            )}
+          </>
+        )}
+
+        {prof && classes !== null && !aDesClasses && (
+          <>
+            <input value={prenomManuel} onChange={(e) => setPrenomManuel(e.target.value)} placeholder="Prénom"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            <input value={nomManuel} onChange={(e) => setNomManuel(e.target.value)} placeholder="Nom"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            <input value={classeManuelle} onChange={(e) => setClasseManuelle(e.target.value)} placeholder="Classe (ex : 1G3)"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </>
+        )}
+
+        {identitePrete && (
+          <div className="pt-2 space-y-2.5">
+            <p className="text-xs text-neutral-500 px-1">
+              {aDesClasses && !premierePinEnCours ? "Ton code PIN personnel" : "Choisis ton code PIN personnel"}
+            </p>
+            <input
+              type="password" inputMode="numeric" value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+              placeholder="••••"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              maxLength={6}
+            />
+            {(!aDesClasses || premierePinEnCours) && (
+              <input
+                type="password" inputMode="numeric" value={pinConfirm}
+                onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
+                placeholder="Confirme le code"
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                maxLength={6}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      <button
+        disabled={!identitePrete}
+        onClick={valider}
+        className={`w-full mt-5 rounded-xl py-3 font-bold transition ${identitePrete ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
+      >
+        Commencer
+      </button>
+      <p className="text-[10px] text-neutral-600 text-center mt-4">Tes séances sont enregistrées de façon anonyme (par numéro) pour ton suivi et ta notation de cycle — ton nom n'est jamais visible des autres élèves.</p>
+    </div>
+  );
+}
+
 function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
   const [mode, setMode] = useState("eleve"); // "eleve" | "prof"
   const [nom, setNom] = useState(initial?.nom || "");
@@ -203,51 +381,34 @@ function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
           <PartagerApp />
         </div>
         {mode === "eleve" ? (
-        <div className="w-full">
-          <button onClick={() => setMode("prof")} className="w-full mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-400/80 bg-orange-500/5 border border-orange-500/20 rounded-xl py-2.5">
-            Tu es professeur ? Connexion ici →
-          </button>
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-              <User size={26} className="text-orange-400" />
-            </div>
-            <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Qui es-tu ?</h1>
-            <p className="text-sm text-neutral-500 mt-1">Pour que ton professeur puisse suivre ta progression</p>
-          </div>
-          <div className="space-y-3">
-            <input value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Prénom"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            <input value={classe} onChange={(e) => setClasse(e.target.value)} placeholder="Classe (ex : 1G3)"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-
-            {profs.length > 1 && (
-              <div>
-                <p className="text-xs text-neutral-500 mb-1.5 px-1">Ton professeur d'EPS</p>
-                <div className="space-y-1.5">
-                  {profs.map((p) => (
-                    <button
-                      key={p.nom}
-                      onClick={() => setProf(p.nom)}
-                      className={`w-full text-left rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${prof === p.nom ? "bg-orange-500/10 border-orange-500/40 text-orange-300" : "bg-neutral-900 border-neutral-800 text-neutral-300"}`}
-                    >
-                      {p.nom}
-                    </button>
-                  ))}
+          initial ? (
+            // Édition d'un profil déjà existant : formulaire simple (pas de nouveau PIN à créer).
+            <div className="w-full">
+              <div className="text-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
+                  <User size={26} className="text-orange-400" />
                 </div>
+                <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Modifier mon profil</h1>
               </div>
-            )}
-          </div>
-          <button
-            disabled={!pret}
-            onClick={() => onValidateEleve({ type: "eleve", nom: nom.trim(), prenom: prenom.trim(), classe: classe.trim(), prof })}
-            className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
-          >
-            Commencer
-          </button>
-          <p className="text-[10px] text-neutral-600 text-center mt-4">Tes séances sont enregistrées de façon anonyme (par numéro) pour ton suivi et ta notation de cycle — ton nom n'est jamais visible des autres élèves.</p>
-        </div>
+              <div className="space-y-3">
+                <input value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Prénom"
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom"
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                <input value={classe} onChange={(e) => setClasse(e.target.value)} placeholder="Classe (ex : 1G3)"
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              </div>
+              <button
+                disabled={!pret}
+                onClick={() => onValidateEleve({ type: "eleve", nom: nom.trim(), prenom: prenom.trim(), classe: classe.trim(), prof })}
+                className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
+              >
+                Enregistrer
+              </button>
+            </div>
+          ) : (
+            <IdentificationEleveNouveau profs={profs} onValidateEleve={onValidateEleve} onModeProf={() => setMode("prof")} />
+          )
       ) : (
         <div className="w-full">
           <ConnexionProf onValidate={onValidateProf} profs={profs} />
@@ -1415,6 +1576,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [resetEnCours, setResetEnCours] = useState(false);
   const [confirmResetEleve, setConfirmResetEleve] = useState(null); // numero de l'élève à réinitialiser, ou null
   const [rafraichissement, setRafraichissement] = useState(false);
+  const [importOuvert, setImportOuvert] = useState(false);
 
   useEffect(() => {
     if (profNom) {
@@ -1536,6 +1698,9 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
             </div>
           </Card>
           <PartagerApp />
+          <button onClick={() => setImportOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5 text-xs font-bold text-orange-300">
+            <Upload size={13} /> Importer une liste d'élèves
+          </button>
           <button onClick={rafraichirClasses} disabled={rafraichissement} className="w-full flex items-center justify-center gap-2 bg-neutral-900 border border-neutral-800 rounded-xl py-2.5 text-xs font-bold text-neutral-400">
             <RotateCcw size={13} className={rafraichissement ? "animate-spin" : ""} /> {rafraichissement ? "Actualisation…" : "Actualiser les classes"}
           </button>
@@ -1690,6 +1855,20 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
             </Card>
           )}
         </>
+      )}
+
+      {importOuvert && (
+        <ImportEleves
+          prof={profConnecte.nom}
+          onImporte={async () => {
+            setImportOuvert(false);
+            setRafraichissement(true);
+            const c = await loadClassesIndex(profConnecte.nom);
+            setClasses(c);
+            setRafraichissement(false);
+          }}
+          onFermer={() => setImportOuvert(false)}
+        />
       )}
     </div>
   );
@@ -1887,7 +2066,15 @@ export default function MuscuPro() {
   }, [project, profil, projetCharge]);
 
   const handleValiderEleve = async (saisie) => {
-    const complet = await registerProfil(saisie, profil && profil.type === "eleve" ? profil : null);
+    let complet;
+    if (saisie.numero) {
+      // Nouveau parcours (sélection classe/nom + PIN) : le numéro est déjà résolu, pas
+      // besoin de repasser par la recherche par nom de registerProfil.
+      complet = saisie;
+      await saveProfilStorage(complet);
+    } else {
+      complet = await registerProfil(saisie, profil && profil.type === "eleve" ? profil : null);
+    }
     setProfil(complet);
     setEditing(false);
   };

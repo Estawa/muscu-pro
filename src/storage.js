@@ -123,10 +123,57 @@ async function removeClasseFromIndex(prof, classe) {
   } catch (e) {}
 }
 
-function genNumero(existants) {
+export function genNumero(existants) {
   let n;
   do { n = Math.floor(1000 + Math.random() * 9000); } while (existants.includes(n));
   return n;
+}
+
+// ---------- Import de liste de classe (Firestore, par prof + classe) ----------
+//
+// listeEleves : [{ nom, prenom, sexe? }] déjà filtrés sur UNE classe donnée.
+// mode "ajouter" : met à jour les élèves déjà présents (par nom/prénom, en gardant leur
+// numéro et leur PIN) et ajoute les nouveaux avec un numéro généré et un PIN vide.
+// mode "remplacer" : la classe ne contient plus que les élèves du fichier (les élèves
+// reconnus gardent leur numéro/PIN, les autres sont retirés).
+export async function appliquerImportClasse(prof, classe, listeEleves, mode = "ajouter") {
+  const mapping = await loadMapping(prof, classe);
+  let next;
+  if (mode === "remplacer") {
+    next = listeEleves.map((imp) => {
+      const trouve = mapping.find(
+        (m) => slug(m.nom) === slug(imp.nom) && slug(m.prenom) === slug(imp.prenom)
+      );
+      if (trouve) return { ...trouve, sexe: imp.sexe || trouve.sexe || null };
+      return { numero: genNumero(mapping.map((m) => m.numero)), nom: imp.nom, prenom: imp.prenom, sexe: imp.sexe || null, pin: null };
+    });
+  } else {
+    next = mapping.slice();
+    listeEleves.forEach((imp) => {
+      const idx = next.findIndex((m) => slug(m.nom) === slug(imp.nom) && slug(m.prenom) === slug(imp.prenom));
+      if (idx !== -1) {
+        if (imp.sexe && !next[idx].sexe) next[idx] = { ...next[idx], sexe: imp.sexe };
+      } else {
+        next.push({ numero: genNumero(next.map((m) => m.numero)), nom: imp.nom, prenom: imp.prenom, sexe: imp.sexe || null, pin: null });
+      }
+    });
+  }
+  await saveMapping(prof, classe, next);
+  await addClasseToIndex(prof, classe);
+  return next;
+}
+
+// ---------- Code PIN personnel par élève (Firestore, dans le mapping) ----------
+
+export async function definirPinEleve(prof, classe, numero, pin) {
+  const mapping = await loadMapping(prof, classe);
+  const next = mapping.map((m) => (m.numero === numero ? { ...m, pin } : m));
+  await saveMapping(prof, classe, next);
+}
+
+export function verifierPinEleve(mapping, numero, pin) {
+  const e = (mapping || []).find((m) => m.numero === numero);
+  return !!e && e.pin === pin;
 }
 
 // Enregistre/relie un élève : réutilise son numéro existant si prof+classe
