@@ -12,8 +12,8 @@ export default defineConfig({
         name: "Muscu Pro",
         short_name: "Muscu Pro",
         description: "Compagnon de musculation - by C. Guilhem",
-        theme_color: "#0a0a0a",
-        background_color: "#0a0a0a",
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         display: "standalone",
         start_url: "/",
         icons: [
