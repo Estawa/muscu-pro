@@ -176,6 +176,24 @@ export function verifierPinEleve(mapping, numero, pin) {
   return !!e && e.pin === pin;
 }
 
+export async function modifierEleveMapping(prof, classe, numero, { nom, prenom, sexe }) {
+  const mapping = await loadMapping(prof, classe);
+  const next = mapping.map((m) =>
+    m.numero === numero
+      ? { ...m, nom: nom.trim(), prenom: prenom.trim(), sexe: sexe !== undefined ? (sexe || null) : m.sexe }
+      : m
+  );
+  await saveMapping(prof, classe, next);
+  return next;
+}
+
+export async function supprimerEleveMapping(prof, classe, numero) {
+  const mapping = await loadMapping(prof, classe);
+  const next = mapping.filter((m) => m.numero !== numero);
+  await saveMapping(prof, classe, next);
+  return next;
+}
+
 // Enregistre/relie un élève : réutilise son numéro existant si prof+classe
 // sont inchangés, sinon en génère un nouveau et met à jour mapping + index.
 export async function registerProfil(saisie, ancienProfil) {

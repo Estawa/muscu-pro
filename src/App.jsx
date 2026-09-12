@@ -10,6 +10,7 @@ import {
   loadStudentHistoriqueByNumero, loadSeances, saveSeances, loadStudentSeancesByNumero,
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
   loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
+  modifierEleveMapping, supprimerEleveMapping,
 } from "./storage.js";
 import ImportEleves from "./ImportEleves.jsx";
 
@@ -1577,6 +1578,14 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [confirmResetEleve, setConfirmResetEleve] = useState(null); // numero de l'élève à réinitialiser, ou null
   const [rafraichissement, setRafraichissement] = useState(false);
   const [importOuvert, setImportOuvert] = useState(false);
+  const [ajoutEleveOuvert, setAjoutEleveOuvert] = useState(false);
+  const [nouvelElevePrenom, setNouvelElevePrenom] = useState("");
+  const [nouvelEleveNom, setNouvelEleveNom] = useState("");
+  const [nouvelEleveSexe, setNouvelEleveSexe] = useState("");
+  const [editionEleve, setEditionEleve] = useState(null); // numero en cours d'édition
+  const [editPrenom, setEditPrenom] = useState("");
+  const [editNom, setEditNom] = useState("");
+  const [confirmRetraitEleve, setConfirmRetraitEleve] = useState(null); // numero à retirer, ou null
 
   useEffect(() => {
     if (profNom) {
@@ -1614,6 +1623,40 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
     setDataEleves({});
     setEleveOuvert(null);
     setRafraichissement(false);
+  };
+
+  const ajouterEleve = async (e) => {
+    e.preventDefault();
+    if (!nouvelElevePrenom.trim() || !nouvelEleveNom.trim()) return;
+    const next = await appliquerImportClasse(
+      profConnecte.nom,
+      classeChoisie,
+      [{ nom: nouvelEleveNom.trim(), prenom: nouvelElevePrenom.trim(), sexe: nouvelEleveSexe || null }],
+      "ajouter"
+    );
+    setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+    setNouvelElevePrenom(""); setNouvelEleveNom(""); setNouvelEleveSexe("");
+    setAjoutEleveOuvert(false);
+  };
+
+  const ouvrirEdition = (eleve) => {
+    setEditionEleve(eleve.numero);
+    setEditPrenom(eleve.prenom);
+    setEditNom(eleve.nom);
+  };
+
+  const enregistrerEdition = async (numero) => {
+    if (!editPrenom.trim() || !editNom.trim()) return;
+    const next = await modifierEleveMapping(profConnecte.nom, classeChoisie, numero, { nom: editNom, prenom: editPrenom });
+    setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+    setEditionEleve(null);
+  };
+
+  const retirerEleve = async (numero) => {
+    const next = await supprimerEleveMapping(profConnecte.nom, classeChoisie, numero);
+    setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+    setConfirmRetraitEleve(null);
+    if (eleveOuvert === numero) setEleveOuvert(null);
   };
 
   const ouvrirEleve = async (numero) => {
@@ -1742,6 +1785,30 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
             </button>
           </div>
 
+          <button onClick={() => setAjoutEleveOuvert((v) => !v)} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5">
+            <Plus size={13} /> Ajouter un élève
+          </button>
+          {ajoutEleveOuvert && (
+            <Card>
+              <form onSubmit={ajouterEleve} className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <input value={nouvelElevePrenom} onChange={(e) => setNouvelElevePrenom(e.target.value)} placeholder="Prénom" autoFocus
+                    className="flex-1 bg-white border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-900" />
+                  <input value={nouvelEleveNom} onChange={(e) => setNouvelEleveNom(e.target.value)} placeholder="Nom"
+                    className="flex-1 bg-white border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-900" />
+                </div>
+                <div className="flex gap-2">
+                  <select value={nouvelEleveSexe} onChange={(e) => setNouvelEleveSexe(e.target.value)} className="bg-white border border-neutral-200 rounded-xl px-2.5 py-2 text-sm text-neutral-900">
+                    <option value="">Sexe</option>
+                    <option value="F">F</option>
+                    <option value="M">M</option>
+                  </select>
+                  <button type="submit" className="flex-1 bg-orange-500 text-neutral-50 font-bold rounded-xl py-2 text-sm">Ajouter</button>
+                </div>
+              </form>
+            </Card>
+          )}
+
           {chargement && <Card><p className="text-sm text-neutral-500">Chargement…</p></Card>}
 
           {mapping.map((eleve) => {
@@ -1761,6 +1828,40 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
 
                 {isOuvert && (
                   <div className="mt-3 space-y-3">
+                    {editionEleve === eleve.numero ? (
+                      <div className="flex flex-col gap-2 bg-neutral-100 rounded-xl p-3">
+                        <div className="flex gap-2">
+                          <input value={editPrenom} onChange={(e) => setEditPrenom(e.target.value)} placeholder="Prénom"
+                            className="flex-1 bg-white border border-neutral-200 rounded-lg px-3 py-1.5 text-sm text-neutral-900" />
+                          <input value={editNom} onChange={(e) => setEditNom(e.target.value)} placeholder="Nom"
+                            className="flex-1 bg-white border border-neutral-200 rounded-lg px-3 py-1.5 text-sm text-neutral-900" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditionEleve(null)} className="flex-1 rounded-lg py-1.5 text-xs font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                          <button onClick={() => enregistrerEdition(eleve.numero)} className="flex-1 rounded-lg py-1.5 text-xs font-bold text-neutral-50 bg-orange-500">Enregistrer</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button onClick={() => ouvrirEdition(eleve)} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200 rounded-lg py-1.5">
+                          <Pencil size={11} /> Modifier
+                        </button>
+                        <button onClick={() => setConfirmRetraitEleve(eleve.numero)} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-rose-600 bg-white border border-rose-200 rounded-lg py-1.5">
+                          <Trash2 size={11} /> Retirer de la classe
+                        </button>
+                      </div>
+                    )}
+
+                    {confirmRetraitEleve === eleve.numero && (
+                      <div className="bg-rose-500/5 border border-rose-500/40 rounded-xl p-3">
+                        <p className="text-xs text-neutral-700">Retirer <span className="font-bold">{eleve.prenom} {eleve.nom}</span> de la classe {classeChoisie} ? Ses tests et séances déjà enregistrés ne seront plus consultables (l'élève n'apparaîtra plus dans la liste).</p>
+                        <div className="flex gap-2 mt-2.5">
+                          <button onClick={() => setConfirmRetraitEleve(null)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                          <button onClick={() => retirerEleve(eleve.numero)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-50 bg-rose-500">Confirmer</button>
+                        </div>
+                      </div>
+                    )}
+
                     {!data && <p className="text-xs text-neutral-400">Chargement…</p>}
 
                     {data && (
