@@ -149,10 +149,10 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
 
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-neutral-950 border border-neutral-800 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
-          <h3 className="text-lg font-black uppercase tracking-tight text-neutral-50">Importer une liste d'élèves</h3>
-          <button onClick={onFermer} className="p-1.5 rounded-full hover:bg-neutral-900 text-neutral-500">
+      <div className="bg-white border border-neutral-200 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200">
+          <h3 className="text-lg font-black uppercase tracking-tight text-neutral-950">Importer une liste d'élèves</h3>
+          <button onClick={onFermer} className="p-1.5 rounded-full hover:bg-white text-neutral-500">
             <X size={18} />
           </button>
         </div>
@@ -166,7 +166,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
 
           {etape === "choix" && (
             <>
-              <p className="text-sm text-neutral-400">Formats acceptés : .csv, .xlsx, .ods (exports Pronote inclus).</p>
+              <p className="text-sm text-neutral-600">Formats acceptés : .csv, .xlsx, .ods (exports Pronote inclus).</p>
               <input
                 ref={inputRef}
                 type="file"
@@ -176,7 +176,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
               />
               <button
                 onClick={() => inputRef.current?.click()}
-                className="w-full flex flex-col items-center gap-2 border-2 border-dashed border-neutral-700 rounded-xl py-8 text-neutral-400 hover:border-orange-500 hover:bg-neutral-900 transition"
+                className="w-full flex flex-col items-center gap-2 border-2 border-dashed border-neutral-300 rounded-xl py-8 text-neutral-600 hover:border-orange-500 hover:bg-white transition"
               >
                 <Upload size={22} />
                 <span className="text-sm font-bold">Toucher pour choisir un fichier</span>
@@ -189,13 +189,13 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
               <p className="text-xs text-neutral-500">
                 {nomFichier} · {enTetes.length} colonne(s) · {lignesDonnees.length} ligne(s)
               </p>
-              <p className="text-sm text-neutral-300">Aperçu du fichier tel quel, avant de choisir les colonnes à utiliser :</p>
-              <div className="overflow-auto border border-neutral-800 rounded-xl max-h-72">
+              <p className="text-sm text-neutral-700">Aperçu du fichier tel quel, avant de choisir les colonnes à utiliser :</p>
+              <div className="overflow-auto border border-neutral-200 rounded-xl max-h-72">
                 <table className="text-xs w-full border-collapse">
                   <thead>
                     <tr>
                       {enTetes.map((h, i) => (
-                        <th key={i} className="sticky top-0 bg-neutral-900 border-b border-neutral-800 px-2 py-1.5 text-left whitespace-nowrap text-neutral-300">
+                        <th key={i} className="sticky top-0 bg-white border-b border-neutral-200 px-2 py-1.5 text-left whitespace-nowrap text-neutral-700">
                           {h || `Colonne ${i + 1}`}
                         </th>
                       ))}
@@ -205,7 +205,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
                     {lignesDonnees.slice(0, 30).map((ligne, i) => (
                       <tr key={i}>
                         {enTetes.map((_, j) => (
-                          <td key={j} className="border-b border-neutral-900 px-2 py-1.5 whitespace-nowrap text-neutral-400">
+                          <td key={j} className="border-b border-neutral-100 px-2 py-1.5 whitespace-nowrap text-neutral-600">
                             {String(ligne[j] ?? "").trim() || "—"}
                           </td>
                         ))}
@@ -218,10 +218,10 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
                 <p className="text-[11px] text-neutral-500">… et {lignesDonnees.length - 30} ligne(s) de plus (non affichées ici, mais bien importées).</p>
               )}
               <div className="flex items-center justify-between pt-1">
-                <button onClick={recommencer} className="flex items-center gap-1 text-sm text-neutral-400">
+                <button onClick={recommencer} className="flex items-center gap-1 text-sm text-neutral-600">
                   <ChevronLeft size={16} /> Changer de fichier
                 </button>
-                <button onClick={() => setEtape("mapping")} className="bg-orange-500 text-neutral-950 font-bold px-4 py-2 rounded-xl text-sm">
+                <button onClick={() => setEtape("mapping")} className="bg-orange-500 text-neutral-50 font-bold px-4 py-2 rounded-xl text-sm">
                   Choisir les colonnes →
                 </button>
               </div>
@@ -231,7 +231,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
           {etape === "mapping" && (
             <>
               <p className="text-xs text-neutral-500">{nomFichier} · {lignesDonnees.length} ligne(s) détectée(s)</p>
-              <p className="text-sm text-neutral-300">Pour chaque colonne de ton fichier, choisis ce qu'elle représente :</p>
+              <p className="text-sm text-neutral-700">Pour chaque colonne de ton fichier, choisis ce qu'elle représente :</p>
               <div className="space-y-2.5">
                 {enTetes.map((h, i) => (
                   <div key={i}>
@@ -246,7 +246,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
                           return suivant;
                         })
                       }
-                      className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-2 text-sm text-neutral-100"
+                      className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm text-neutral-900"
                     >
                       <option value="">— Non importé —</option>
                       {CIBLES_IMPORT.map((c) => (
@@ -259,23 +259,23 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
 
               {!classeMappee && (
                 <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Aucune colonne "Classe" choisie : classe à appliquer à tous ces élèves
                   </label>
                   <input
                     value={classeParDefaut}
                     onChange={(e) => setClasseParDefaut(e.target.value)}
                     placeholder="Ex : 2NDE4"
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-neutral-100"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-neutral-900"
                   />
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-1">
-                <button onClick={() => setEtape("apercuBrut")} className="flex items-center gap-1 text-sm text-neutral-400">
+                <button onClick={() => setEtape("apercuBrut")} className="flex items-center gap-1 text-sm text-neutral-600">
                   <ChevronLeft size={16} /> Revenir à l'aperçu
                 </button>
-                <button onClick={passerAlApercu} className="bg-orange-500 text-neutral-950 font-bold px-4 py-2 rounded-xl text-sm">
+                <button onClick={passerAlApercu} className="bg-orange-500 text-neutral-50 font-bold px-4 py-2 rounded-xl text-sm">
                   Aperçu →
                 </button>
               </div>
@@ -289,7 +289,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
               <div className="flex items-center justify-between">
                 <p className="text-xs text-neutral-500">{cochees.filter(Boolean).length} / {lignesDonnees.length} sélectionné(s)</p>
                 <div className="flex gap-3">
-                  <button onClick={() => toutCocher(true)} className="text-[11px] font-bold text-neutral-300">Tout cocher</button>
+                  <button onClick={() => toutCocher(true)} className="text-[11px] font-bold text-neutral-700">Tout cocher</button>
                   <button onClick={() => toutCocher(false)} className="text-[11px] font-bold text-neutral-500">Tout décocher</button>
                 </div>
               </div>
@@ -297,16 +297,16 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
                 {nbExistants} correspondent à des élèves déjà présents (mise à jour, sans rien effacer) · {construitsCoches.length - nbExistants} nouveau(x)
               </p>
 
-              <div className="max-h-64 overflow-y-auto border border-neutral-800 rounded-xl divide-y divide-neutral-900">
+              <div className="max-h-64 overflow-y-auto border border-neutral-200 rounded-xl divide-y divide-neutral-100">
                 {lignesConstruites.map((e, i) => (
                   <label key={i} className={`flex items-center gap-2.5 px-3 py-2 ${cochees[i] ? "" : "opacity-40"}`}>
                     <input type="checkbox" checked={cochees[i]} onChange={() => toggle(i)} className="rounded" />
-                    <span className="text-sm text-neutral-100 flex-1">
+                    <span className="text-sm text-neutral-900 flex-1">
                       {e.prenom} {e.nom} <span className="text-neutral-500 text-xs">· {e.classe}</span>
                       {e.sexe && <span className="text-neutral-500 text-xs"> · {e.sexe}</span>}
                     </span>
                     {(e.nom || e.prenom) && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${estExistant(e) ? "bg-rose-500/10 text-rose-400" : "bg-neutral-800 text-neutral-300"}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${estExistant(e) ? "bg-rose-500/10 text-rose-400" : "bg-neutral-200 text-neutral-700"}`}>
                         {estExistant(e) ? "mise à jour" : "nouveau"}
                       </span>
                     )}
@@ -315,7 +315,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => valider("ajouter")} className="flex-1 bg-orange-500 text-neutral-950 font-bold py-2.5 rounded-xl text-sm">
+                <button onClick={() => valider("ajouter")} className="flex-1 bg-orange-500 text-neutral-50 font-bold py-2.5 rounded-xl text-sm">
                   Mettre à jour / ajouter
                 </button>
                 <button
@@ -324,7 +324,7 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
                       valider("remplacer");
                     }
                   }}
-                  className="flex-1 border border-neutral-700 text-rose-400 font-bold py-2.5 rounded-xl text-sm"
+                  className="flex-1 border border-neutral-300 text-rose-400 font-bold py-2.5 rounded-xl text-sm"
                 >
                   Remplacer la liste
                 </button>

@@ -73,16 +73,16 @@ const BORG = [
 ];
 
 const colorMap = {
-  rose: { bg: "bg-rose-500", bgSoft: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/40", ring: "ring-rose-500" },
-  sky: { bg: "bg-sky-500", bgSoft: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/40", ring: "ring-sky-500" },
-  amber: { bg: "bg-amber-500", bgSoft: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/40", ring: "ring-amber-500" },
-  emerald: { bg: "bg-emerald-500", bgSoft: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/40", ring: "ring-emerald-500" },
-  violet: { bg: "bg-violet-500", bgSoft: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/40", ring: "ring-violet-500" },
-  teal: { bg: "bg-teal-500", bgSoft: "bg-teal-500/10", text: "text-teal-400", border: "border-teal-500/40", ring: "ring-teal-500" },
-  cyan: { bg: "bg-cyan-500", bgSoft: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/40", ring: "ring-cyan-500" },
-  fuchsia: { bg: "bg-fuchsia-500", bgSoft: "bg-fuchsia-500/10", text: "text-fuchsia-400", border: "border-fuchsia-500/40", ring: "ring-fuchsia-500" },
-  indigo: { bg: "bg-indigo-500", bgSoft: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/40", ring: "ring-indigo-500" },
-  lime: { bg: "bg-lime-500", bgSoft: "bg-lime-500/10", text: "text-lime-400", border: "border-lime-500/40", ring: "ring-lime-500" },
+  rose: { bg: "bg-rose-500", bgSoft: "bg-rose-500/10", text: "text-rose-600", border: "border-rose-500/40", ring: "ring-rose-500" },
+  sky: { bg: "bg-sky-500", bgSoft: "bg-sky-500/10", text: "text-sky-600", border: "border-sky-500/40", ring: "ring-sky-500" },
+  amber: { bg: "bg-amber-500", bgSoft: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-500/40", ring: "ring-amber-500" },
+  emerald: { bg: "bg-emerald-500", bgSoft: "bg-emerald-500/10", text: "text-emerald-600", border: "border-emerald-500/40", ring: "ring-emerald-500" },
+  violet: { bg: "bg-violet-500", bgSoft: "bg-violet-500/10", text: "text-violet-600", border: "border-violet-500/40", ring: "ring-violet-500" },
+  teal: { bg: "bg-teal-500", bgSoft: "bg-teal-500/10", text: "text-teal-600", border: "border-teal-500/40", ring: "ring-teal-500" },
+  cyan: { bg: "bg-cyan-500", bgSoft: "bg-cyan-500/10", text: "text-cyan-600", border: "border-cyan-500/40", ring: "ring-cyan-500" },
+  fuchsia: { bg: "bg-fuchsia-500", bgSoft: "bg-fuchsia-500/10", text: "text-fuchsia-600", border: "border-fuchsia-500/40", ring: "ring-fuchsia-500" },
+  indigo: { bg: "bg-indigo-500", bgSoft: "bg-indigo-500/10", text: "text-indigo-600", border: "border-indigo-500/40", ring: "ring-indigo-500" },
+  lime: { bg: "bg-lime-500", bgSoft: "bg-lime-500/10", text: "text-lime-700", border: "border-lime-500/40", ring: "ring-lime-500" },
 };
 
 const mobileById = (id) => MOBILES.find((m) => m.id === id);
@@ -112,16 +112,16 @@ function Header({ title, subtitle }) {
   return (
     <div className="px-5 pt-6 pb-4">
       <div className="flex items-baseline gap-2">
-        <h1 className="text-2xl font-black tracking-tight text-neutral-50 uppercase">{title}</h1>
+        <h1 className="text-2xl font-black tracking-tight text-neutral-950 uppercase">{title}</h1>
       </div>
-      {subtitle && <p className="text-sm text-neutral-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-sm text-neutral-600 mt-1">{subtitle}</p>}
     </div>
   );
 }
 
 function Card({ children, className = "" }) {
   return (
-    <div className={`bg-neutral-900 border border-neutral-800 rounded-2xl p-4 ${className}`}>
+    <div className={`bg-white border border-neutral-200 rounded-2xl p-4 ${className}`}>
       {children}
     </div>
   );
@@ -151,9 +151,9 @@ function ConnexionProf({ onValidate, profs }) {
     <div className="w-full max-w-sm">
       <div className="text-center mb-8">
         <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-          <Lock size={24} className="text-orange-400" />
+          <Lock size={24} className="text-orange-600" />
         </div>
-        <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Connexion professeur</h1>
+        <h1 className="text-xl font-black uppercase tracking-tight text-neutral-950">Connexion professeur</h1>
         <p className="text-sm text-neutral-500 mt-1">Ton nom et ton code d'accès personnel</p>
       </div>
       <div className="space-y-3">
@@ -164,7 +164,7 @@ function ConnexionProf({ onValidate, profs }) {
               <button
                 key={p.nom}
                 onClick={() => { setProfChoisi(p.nom); setErreur(false); }}
-                className={`w-full text-left rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${profChoisi === p.nom ? "bg-orange-500/10 border-orange-500/40 text-orange-300" : "bg-neutral-900 border-neutral-800 text-neutral-300"}`}
+                className={`w-full text-left rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${profChoisi === p.nom ? "bg-orange-500/10 border-orange-500/40 text-orange-700" : "bg-white border-neutral-200 text-neutral-700"}`}
               >
                 {p.nom}
               </button>
@@ -174,14 +174,14 @@ function ConnexionProf({ onValidate, profs }) {
         <input
           type="password" value={pin} onChange={(e) => { setPin(e.target.value); setErreur(false); }}
           placeholder="Code d'accès"
-          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-lg font-bold text-neutral-900 text-center tracking-widest placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
-        {erreur && <p className="text-xs text-rose-400 text-center">Nom ou code incorrect.</p>}
+        {erreur && <p className="text-xs text-rose-600 text-center">Nom ou code incorrect.</p>}
       </div>
       <button
         disabled={!pret}
         onClick={valider}
-        className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
+        className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-50 active:scale-[0.98]" : "bg-neutral-100 text-neutral-400"}`}
       >
         Se connecter
       </button>
@@ -254,18 +254,18 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
 
   return (
     <div className="w-full">
-      <button onClick={onModeProf} className="w-full mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-400/80 bg-orange-500/5 border border-orange-500/20 rounded-xl py-2.5">
+      <button onClick={onModeProf} className="w-full mb-6 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-600/80 bg-orange-500/5 border border-orange-500/20 rounded-xl py-2.5">
         Tu es professeur ? Connexion ici →
       </button>
       <div className="text-center mb-8">
         <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-          <User size={26} className="text-orange-400" />
+          <User size={26} className="text-orange-600" />
         </div>
-        <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Qui es-tu ?</h1>
+        <h1 className="text-xl font-black uppercase tracking-tight text-neutral-950">Qui es-tu ?</h1>
         <p className="text-sm text-neutral-500 mt-1">Pour que ton professeur puisse suivre ta progression</p>
       </div>
 
-      {erreur && <p className="text-xs text-rose-400 text-center mb-3">{erreur}</p>}
+      {erreur && <p className="text-xs text-rose-600 text-center mb-3">{erreur}</p>}
 
       <div className="space-y-3">
         <div>
@@ -273,7 +273,7 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
           <select
             value={prof}
             onChange={(e) => setProf(e.target.value)}
-            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="" disabled>Sélectionne ton professeur...</option>
             {profs.map((p) => (
@@ -291,7 +291,7 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
               <select
                 value={classe}
                 onChange={(e) => setClasse(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="" disabled>Sélectionne ta classe...</option>
                 {classes.map((c) => (
@@ -305,14 +305,14 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
                 <select
                   value={numero}
                   onChange={(e) => { setNumero(e.target.value); setPin(""); setPinConfirm(""); setErreur(""); }}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="" disabled>Sélectionne ton nom...</option>
                   {mapping.map((m) => (
                     <option key={m.numero} value={m.numero}>{m.prenom} {m.nom}</option>
                   ))}
                 </select>
-                {mapping.length === 0 && <p className="text-xs text-neutral-600 mt-1">Aucun élève enregistré dans cette classe pour l'instant.</p>}
+                {mapping.length === 0 && <p className="text-xs text-neutral-400 mt-1">Aucun élève enregistré dans cette classe pour l'instant.</p>}
               </div>
             )}
           </>
@@ -321,11 +321,11 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
         {prof && classes !== null && !aDesClasses && (
           <>
             <input value={prenomManuel} onChange={(e) => setPrenomManuel(e.target.value)} placeholder="Prénom"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
             <input value={nomManuel} onChange={(e) => setNomManuel(e.target.value)} placeholder="Nom"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
             <input value={classeManuelle} onChange={(e) => setClasseManuelle(e.target.value)} placeholder="Classe (ex : 1G3)"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
           </>
         )}
 
@@ -338,7 +338,7 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
               type="password" inputMode="numeric" value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
               placeholder="••••"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-lg font-bold text-neutral-900 text-center tracking-widest placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
               maxLength={6}
             />
             {(!aDesClasses || premierePinEnCours) && (
@@ -346,7 +346,7 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
                 type="password" inputMode="numeric" value={pinConfirm}
                 onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
                 placeholder="Confirme le code"
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-lg font-bold text-neutral-900 text-center tracking-widest placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 maxLength={6}
               />
             )}
@@ -357,11 +357,11 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
       <button
         disabled={!identitePrete}
         onClick={valider}
-        className={`w-full mt-5 rounded-xl py-3 font-bold transition ${identitePrete ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
+        className={`w-full mt-5 rounded-xl py-3 font-bold transition ${identitePrete ? "bg-orange-500 text-neutral-50 active:scale-[0.98]" : "bg-neutral-100 text-neutral-400"}`}
       >
         Commencer
       </button>
-      <p className="text-[10px] text-neutral-600 text-center mt-4">Tes séances sont enregistrées de façon anonyme (par numéro) pour ton suivi et ta notation de cycle — ton nom n'est jamais visible des autres élèves.</p>
+      <p className="text-[10px] text-neutral-400 text-center mt-4">Tes séances sont enregistrées de façon anonyme (par numéro) pour ton suivi et ta notation de cycle — ton nom n'est jamais visible des autres élèves.</p>
     </div>
   );
 }
@@ -375,7 +375,7 @@ function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
   const pret = nom.trim() && prenom.trim() && classe.trim() && prof;
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-white flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6">
           <PartagerApp />
@@ -386,22 +386,22 @@ function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
             <div className="w-full">
               <div className="text-center mb-8">
                 <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-                  <User size={26} className="text-orange-400" />
+                  <User size={26} className="text-orange-600" />
                 </div>
-                <h1 className="text-xl font-black uppercase tracking-tight text-neutral-50">Modifier mon profil</h1>
+                <h1 className="text-xl font-black uppercase tracking-tight text-neutral-950">Modifier mon profil</h1>
               </div>
               <div className="space-y-3">
                 <input value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Prénom"
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom"
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 <input value={classe} onChange={(e) => setClasse(e.target.value)} placeholder="Classe (ex : 1G3)"
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
               </div>
               <button
                 disabled={!pret}
                 onClick={() => onValidateEleve({ type: "eleve", nom: nom.trim(), prenom: prenom.trim(), classe: classe.trim(), prof })}
-                className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-950 active:scale-[0.98]" : "bg-neutral-900 text-neutral-600"}`}
+                className={`w-full mt-5 rounded-xl py-3 font-bold transition ${pret ? "bg-orange-500 text-neutral-50 active:scale-[0.98]" : "bg-neutral-100 text-neutral-400"}`}
               >
                 Enregistrer
               </button>
@@ -412,7 +412,7 @@ function Identification({ onValidateEleve, onValidateProf, initial, profs }) {
       ) : (
         <div className="w-full">
           <ConnexionProf onValidate={onValidateProf} profs={profs} />
-          <button onClick={() => setMode("eleve")} className="w-full mt-6 text-center text-xs font-semibold text-neutral-600">
+          <button onClick={() => setMode("eleve")} className="w-full mt-6 text-center text-xs font-semibold text-neutral-400">
             ← Je suis élève
           </button>
         </div>
@@ -448,12 +448,12 @@ function PartagerApp() {
     <Card>
       <button onClick={() => setOuvert((o) => !o)} className="w-full flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
-            <Share2 size={14} className="text-neutral-400" />
+          <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center">
+            <Share2 size={14} className="text-neutral-600" />
           </div>
-          <p className="text-sm font-bold text-neutral-100">Partager l'appli</p>
+          <p className="text-sm font-bold text-neutral-900">Partager l'appli</p>
         </div>
-        <ChevronRight size={16} className={`text-neutral-600 transition ${ouvert ? "rotate-90" : ""}`} />
+        <ChevronRight size={16} className={`text-neutral-400 transition ${ouvert ? "rotate-90" : ""}`} />
       </button>
 
       {ouvert && (
@@ -461,14 +461,14 @@ function PartagerApp() {
           <div className="bg-white p-2.5 rounded-xl">
             <img src={qrSrc} alt="QR code de l'appli" width={160} height={160} />
           </div>
-          <p className="text-xs text-neutral-400 text-center break-all px-2">{url || "Adresse disponible une fois l'appli déployée"}</p>
-          <button onClick={partager} className="w-full bg-orange-500 text-neutral-950 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
+          <p className="text-xs text-neutral-600 text-center break-all px-2">{url || "Adresse disponible une fois l'appli déployée"}</p>
+          <button onClick={partager} className="w-full bg-orange-500 text-neutral-50 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
             <Share2 size={13} /> Partager le lien
           </button>
-          <button onClick={copier} className="w-full bg-neutral-800 text-neutral-200 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
+          <button onClick={copier} className="w-full bg-neutral-200 text-neutral-800 text-xs font-bold rounded-lg py-2.5 flex items-center justify-center gap-1.5">
             {copie ? <><Check size={13} /> Lien copié</> : <><Copy size={13} /> Copier le lien</>}
           </button>
-          <p className="text-[10px] text-neutral-600 text-center">Fais scanner ce code, partage le lien via ta messagerie préférée, ou transmets-le pour que chaque élève installe l'appli sur son téléphone.</p>
+          <p className="text-[10px] text-neutral-400 text-center">Fais scanner ce code, partage le lien via ta messagerie préférée, ou transmets-le pour que chaque élève installe l'appli sur son téléphone.</p>
         </div>
       )}
     </Card>
@@ -482,26 +482,26 @@ function Accueil({ setTab, sessions, project, profil, onEditProfil, onDeconnexio
   return (
     <div className="px-5 pb-6 space-y-4">
       <div className="flex items-center gap-2">
-        <button onClick={onEditProfil} className="flex-1 flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3">
+        <button onClick={onEditProfil} className="flex-1 flex items-center justify-between bg-white border border-neutral-200 rounded-2xl px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-orange-500/15 flex items-center justify-center">
-              <User size={15} className="text-orange-400" />
+              <User size={15} className="text-orange-600" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-neutral-100">{profil.prenom} {profil.nom}</p>
+              <p className="text-sm font-bold text-neutral-900">{profil.prenom} {profil.nom}</p>
               <p className="text-[11px] text-neutral-500">{profil.classe}</p>
             </div>
           </div>
-          <span className="text-[10px] text-neutral-600">modifier</span>
+          <span className="text-[10px] text-neutral-400">modifier</span>
         </button>
-        <button onClick={onDeconnexion} className="w-12 h-12 shrink-0 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+        <button onClick={onDeconnexion} className="w-12 h-12 shrink-0 rounded-2xl bg-white border border-neutral-200 flex items-center justify-center">
           <LogOut size={16} className="text-neutral-500" />
         </button>
       </div>
 
       <PartagerApp />
 
-      <Card className="bg-gradient-to-br from-neutral-900 to-neutral-950">
+      <Card className="bg-gradient-to-br from-neutral-100 to-neutral-50">
         <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-3">Mon projet, zone par zone</p>
         <div className="space-y-2">
           {ZONES.map((z) => {
@@ -518,14 +518,14 @@ function Accueil({ setTab, sessions, project, profil, onEditProfil, onDeconnexio
                     {m.label} · {m.nom}
                   </span>
                 ) : (
-                  <span className="text-xs text-neutral-600">non défini</span>
+                  <span className="text-xs text-neutral-400">non défini</span>
                 )}
               </div>
             );
           })}
         </div>
         {ZONES.filter((z) => z.hasMobile).every((z) => !project.mobiles[z.id]) && (
-          <button onClick={() => setTab("projet")} className="mt-3 text-sm text-neutral-300 underline decoration-neutral-600 underline-offset-2">
+          <button onClick={() => setTab("projet")} className="mt-3 text-sm text-neutral-700 underline decoration-neutral-400 underline-offset-2">
             Construire mon projet →
           </button>
         )}
@@ -534,11 +534,11 @@ function Accueil({ setTab, sessions, project, profil, onEditProfil, onDeconnexio
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Séances loguées</p>
-          <p className="text-3xl font-black text-neutral-50 mt-1">{sessions.length}</p>
+          <p className="text-3xl font-black text-neutral-950 mt-1">{sessions.length}</p>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Tonnage cumulé</p>
-          <p className="text-3xl font-black text-neutral-50 mt-1">{totalTonnage.toLocaleString("fr-FR")}<span className="text-base font-semibold text-neutral-500"> kg</span></p>
+          <p className="text-3xl font-black text-neutral-950 mt-1">{totalTonnage.toLocaleString("fr-FR")}<span className="text-base font-semibold text-neutral-500"> kg</span></p>
         </Card>
       </div>
 
@@ -547,11 +547,11 @@ function Accueil({ setTab, sessions, project, profil, onEditProfil, onDeconnexio
           <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-2">Dernière séance</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-neutral-200 font-semibold">{lastSession.date}</p>
+              <p className="text-neutral-800 font-semibold">{lastSession.date}</p>
               <p className="text-sm text-neutral-500">RPE {lastSession.rpe}/10 · {lastSession.duree} min</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-black text-orange-400">{lastSession.charge}<span className="text-sm text-neutral-500 font-semibold"> UA</span></p>
+              <p className="text-2xl font-black text-orange-600">{lastSession.charge}<span className="text-sm text-neutral-500 font-semibold"> UA</span></p>
               <p className="text-xs text-neutral-500">charge de séance</p>
             </div>
           </div>
@@ -575,26 +575,26 @@ function Mobiles() {
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-xs font-black uppercase tracking-widest ${c.text}`}>{m.label}</p>
-                <p className="text-lg font-bold text-neutral-50">{m.nom}</p>
+                <p className="text-lg font-bold text-neutral-950">{m.nom}</p>
               </div>
               <div className={`px-3 py-1.5 rounded-full ${c.bgSoft} ${c.text} text-xs font-bold`}>{m.reps} rép.</div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3 text-center">
-              <div className="bg-neutral-950 rounded-xl py-2">
+              <div className="bg-white rounded-xl py-2">
                 <p className="text-[10px] uppercase text-neutral-500 font-semibold">Charge</p>
-                <p className="text-sm font-bold text-neutral-200">{m.charge}</p>
+                <p className="text-sm font-bold text-neutral-800">{m.charge}</p>
               </div>
-              <div className="bg-neutral-950 rounded-xl py-2">
+              <div className="bg-white rounded-xl py-2">
                 <p className="text-[10px] uppercase text-neutral-500 font-semibold">Séries</p>
-                <p className="text-sm font-bold text-neutral-200">{m.series}</p>
+                <p className="text-sm font-bold text-neutral-800">{m.series}</p>
               </div>
-              <div className="bg-neutral-950 rounded-xl py-2">
+              <div className="bg-white rounded-xl py-2">
                 <p className="text-[10px] uppercase text-neutral-500 font-semibold">Récup</p>
-                <p className="text-sm font-bold text-neutral-200">{m.recup}</p>
+                <p className="text-sm font-bold text-neutral-800">{m.recup}</p>
               </div>
-              <div className="bg-neutral-950 rounded-xl py-2">
+              <div className="bg-white rounded-xl py-2">
                 <p className="text-[10px] uppercase text-neutral-500 font-semibold">Effet</p>
-                <p className="text-[11px] font-semibold text-neutral-300 leading-tight mt-0.5">{m.effet.split(" / ")[0]}</p>
+                <p className="text-[11px] font-semibold text-neutral-700 leading-tight mt-0.5">{m.effet.split(" / ")[0]}</p>
               </div>
             </div>
           </Card>
@@ -614,8 +614,8 @@ function AtelierForm({ initial, onValider, onAnnuler, erreur }) {
   const [valeurs, setValeurs] = useState(initial || ATELIER_VIDE);
   const champ = (k, v) => setValeurs((p) => ({ ...p, [k]: v }));
   return (
-    <Card className="bg-neutral-900/60 border-orange-500/30">
-      <p className="text-xs uppercase tracking-widest text-orange-400 font-semibold mb-3">
+    <Card className="bg-white/60 border-orange-500/30">
+      <p className="text-xs uppercase tracking-widest text-orange-600 font-semibold mb-3">
         {initial ? "Modifier l'atelier" : "Nouvel atelier"}
       </p>
       <div className="space-y-2">
@@ -623,33 +623,33 @@ function AtelierForm({ initial, onValider, onAnnuler, erreur }) {
           value={valeurs.nom}
           onChange={(e) => champ("nom", e.target.value)}
           placeholder="Nom de l'atelier"
-          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
         <input
           value={valeurs.muscles}
           onChange={(e) => champ("muscles", e.target.value)}
           placeholder="Muscles concernés"
-          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
         <select
           value={valeurs.zone}
           onChange={(e) => champ("zone", e.target.value)}
-          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-neutral-300"
+          className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-700"
         >
           {ZONES.map((z) => <option key={z.id} value={z.id}>{z.label}</option>)}
         </select>
       </div>
-      {erreur && <p className="text-[11px] text-rose-400 mt-2">{erreur}</p>}
+      {erreur && <p className="text-[11px] text-rose-600 mt-2">{erreur}</p>}
       <div className="flex gap-2 mt-3">
         <button
           onClick={() => onValider(valeurs)}
-          className="flex-1 bg-orange-500 text-neutral-950 font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition"
+          className="flex-1 bg-orange-500 text-neutral-50 font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition"
         >
           <Check size={15} /> Enregistrer
         </button>
         <button
           onClick={onAnnuler}
-          className="px-4 rounded-xl py-2.5 text-xs font-semibold text-neutral-400 bg-neutral-950 border border-neutral-800"
+          className="px-4 rounded-xl py-2.5 text-xs font-semibold text-neutral-600 bg-white border border-neutral-200"
         >
           Annuler
         </button>
@@ -691,13 +691,13 @@ function Ateliers({ ateliersPerso, onAddAtelier, onUpdateAtelier, onDeleteAtelie
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Chercher un atelier ou un muscle…"
-        className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
       />
 
       {!ajoutOuvert && (
         <button
           onClick={() => { setAjoutOuvert(true); setEditionId(null); setErreur(""); }}
-          className="w-full bg-neutral-900 border border-dashed border-orange-500/40 text-orange-400 font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition"
+          className="w-full bg-white border border-dashed border-orange-500/40 text-orange-600 font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition"
         >
           <Plus size={16} /> Ajouter un atelier
         </button>
@@ -718,15 +718,15 @@ function Ateliers({ ateliersPerso, onAddAtelier, onUpdateAtelier, onDeleteAtelie
         ) : (
           <Card key={a.id} className="flex items-center justify-between border-orange-500/30">
             <div>
-              <p className="font-semibold text-neutral-100">{a.nom}</p>
+              <p className="font-semibold text-neutral-900">{a.nom}</p>
               <p className="text-xs text-neutral-500 mt-0.5">{a.muscles}</p>
-              <p className="text-[10px] text-orange-400 mt-1 uppercase tracking-wide">Atelier perso · {zoneById(a.zone)?.label}</p>
+              <p className="text-[10px] text-orange-600 mt-1 uppercase tracking-wide">Atelier perso · {zoneById(a.zone)?.label}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0 ml-2">
               <button onClick={() => { setEditionId(a.id); setAjoutOuvert(false); setErreur(""); }} className="text-neutral-500 p-1">
                 <Pencil size={16} />
               </button>
-              <button onClick={() => onDeleteAtelier(a.id)} className="text-rose-400 p-1">
+              <button onClick={() => onDeleteAtelier(a.id)} className="text-rose-600 p-1">
                 <Trash2 size={16} />
               </button>
             </div>
@@ -741,10 +741,10 @@ function Ateliers({ ateliersPerso, onAddAtelier, onUpdateAtelier, onDeleteAtelie
       {filtered.map((a) => (
         <Card key={a.nom} className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-neutral-100">{a.nom}</p>
+            <p className="font-semibold text-neutral-900">{a.nom}</p>
             <p className="text-xs text-neutral-500 mt-0.5">{a.muscles}</p>
           </div>
-          <Dumbbell size={16} className="text-neutral-600 shrink-0 ml-2" />
+          <Dumbbell size={16} className="text-neutral-400 shrink-0 ml-2" />
         </Card>
       ))}
     </div>
@@ -769,10 +769,10 @@ function Projet({ project, setProject, ateliersTous }) {
 
   return (
     <div className="px-5 pb-6 space-y-4">
-      <Card className="bg-neutral-900/60">
+      <Card className="bg-white/60">
         <div className="flex gap-2">
           <Info size={15} className="text-neutral-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <p className="text-xs text-neutral-600 leading-relaxed">
             Ton projet peut mêler plusieurs mobiles différents selon les zones (masse en membres inférieurs, affinement en tronc avant, puissance en membres supérieurs…) — ou un seul mobile appliqué à tout le corps. Ce qui compte, c'est d'argumenter ton choix zone par zone.
           </p>
         </div>
@@ -798,7 +798,7 @@ function Projet({ project, setProject, ateliersTous }) {
                         <button
                           key={m.id}
                           onClick={() => setZoneMobile(z.id, m.id)}
-                          className={`rounded-lg py-2 text-center border transition ${active ? `${c.bgSoft} ${c.border} ring-1 ${c.ring}` : "bg-neutral-950 border-neutral-800"}`}
+                          className={`rounded-lg py-2 text-center border transition ${active ? `${c.bgSoft} ${c.border} ring-1 ${c.ring}` : "bg-white border-neutral-200"}`}
                         >
                           <p className={`text-[11px] font-black ${active ? c.text : "text-neutral-500"}`}>{m.label}</p>
                         </button>
@@ -806,7 +806,7 @@ function Projet({ project, setProject, ateliersTous }) {
                     })}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-neutral-500 italic bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2">
+                  <p className="text-[11px] text-neutral-500 italic bg-white border border-neutral-200 rounded-lg px-3 py-2">
                     Pas de mobile R1-R25 ici : le travail cardio se pilote en durée / intensité, pas en régime de répétitions.
                   </p>
                 )}
@@ -839,11 +839,11 @@ function Projet({ project, setProject, ateliersTous }) {
                       <button
                         key={a.nom}
                         onClick={() => toggleAtelier(a.nom)}
-                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2.5 border transition ${active ? `${zc.bgSoft} ${zc.border}` : "bg-neutral-950 border-neutral-800"}`}
+                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2.5 border transition ${active ? `${zc.bgSoft} ${zc.border}` : "bg-white border-neutral-200"}`}
                       >
-                        <span className={`text-sm font-medium ${active ? zc.text : "text-neutral-300"}`}>{a.nom}</span>
-                        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${active ? `${zc.bg} border-transparent` : "border-neutral-700"}`}>
-                          {active && <span className="w-2 h-2 rounded-full bg-neutral-950" />}
+                        <span className={`text-sm font-medium ${active ? zc.text : "text-neutral-700"}`}>{a.nom}</span>
+                        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${active ? `${zc.bg} border-transparent` : "border-neutral-300"}`}>
+                          {active && <span className="w-2 h-2 rounded-full bg-white" />}
                         </span>
                       </button>
                     );
@@ -875,7 +875,7 @@ function Projet({ project, setProject, ateliersTous }) {
                   onChange={(e) => setProject((p) => ({ ...p, justifications: { ...p.justifications, [z.id]: e.target.value } }))}
                   placeholder={`Pourquoi ce choix pour ${z.label.toLowerCase()} ?`}
                   rows={2}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                 />
               </div>
             );
@@ -956,7 +956,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full bg-orange-500 text-neutral-950 font-bold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition"
+          className="w-full bg-orange-500 text-neutral-50 font-bold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition"
         >
           <Plus size={18} /> Nouvelle séance
         </button>
@@ -974,17 +974,17 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
               const dernier = row.atelier ? derniereMoyenne(seancesHistorique, row.atelier) : null;
               const s = statsRow(row);
               return (
-                <div key={i} className="border-b border-neutral-900 pb-4 last:border-0 last:pb-0">
+                <div key={i} className="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center gap-1.5">
                     <select
                       value={row.atelier}
                       onChange={(e) => updateRow(i, "atelier", e.target.value)}
-                      className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-2 text-[11px] text-neutral-300"
+                      className="flex-1 bg-white border border-neutral-200 rounded-lg px-2 py-2 text-[11px] text-neutral-700"
                     >
                       <option value="">Atelier…</option>
                       {ateliersTous.map((a) => <option key={a.nom} value={a.nom}>{a.nom}</option>)}
                     </select>
-                    <button onClick={() => removeRow(i)} className="text-neutral-600 px-1">
+                    <button onClick={() => removeRow(i)} className="text-neutral-400 px-1">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -1006,24 +1006,24 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
                         <div key={si} className="grid grid-cols-12 gap-1.5 items-center">
                           <span className="col-span-2 text-[10px] font-black text-neutral-500">Série {si + 1}</span>
                           <input value={serie.charge} onChange={(e) => updateSerie(i, si, "charge", e.target.value)} placeholder="kg" type="number"
-                            className="col-span-4 bg-neutral-950 border border-neutral-800 rounded-lg px-1.5 py-1.5 text-[11px] text-neutral-300 text-center" />
+                            className="col-span-4 bg-white border border-neutral-200 rounded-lg px-1.5 py-1.5 text-[11px] text-neutral-700 text-center" />
                           <input value={serie.reps} onChange={(e) => updateSerie(i, si, "reps", e.target.value)} placeholder="rép" type="number"
-                            className="col-span-4 bg-neutral-950 border border-neutral-800 rounded-lg px-1.5 py-1.5 text-[11px] text-neutral-300 text-center" />
-                          <button onClick={() => removeSerie(i, si)} className="col-span-2 text-neutral-600 flex justify-center">
+                            className="col-span-4 bg-white border border-neutral-200 rounded-lg px-1.5 py-1.5 text-[11px] text-neutral-700 text-center" />
+                          <button onClick={() => removeSerie(i, si)} className="col-span-2 text-neutral-400 flex justify-center">
                             <Trash2 size={12} />
                           </button>
                         </div>
                       ))}
-                      <button onClick={() => addSerie(i)} className="text-[10px] font-semibold text-orange-400 flex items-center gap-1">
+                      <button onClick={() => addSerie(i)} className="text-[10px] font-semibold text-orange-600 flex items-center gap-1">
                         <Plus size={12} /> Ajouter une série
                       </button>
                     </div>
                   )}
 
                   {row.atelier && s.nb > 0 && (
-                    <div className="mt-2 bg-neutral-950 rounded-lg px-3 py-2 flex items-center justify-between">
+                    <div className="mt-2 bg-white rounded-lg px-3 py-2 flex items-center justify-between">
                       <span className="text-[10px] text-neutral-500 uppercase font-semibold">Série moyenne ({s.nb})</span>
-                      <span className="text-xs font-bold text-neutral-200">{Math.round(s.chargeMoy * 10) / 10}kg × {Math.round(s.repsMoy * 10) / 10} rép</span>
+                      <span className="text-xs font-bold text-neutral-800">{Math.round(s.chargeMoy * 10) / 10}kg × {Math.round(s.repsMoy * 10) / 10} rép</span>
                     </div>
                   )}
 
@@ -1035,7 +1035,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
                           <button
                             key={r.id}
                             onClick={() => updateRow(i, "ressenti", active ? "" : r.id)}
-                            className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold flex items-center justify-center gap-1 border ${active ? "bg-orange-500/15 border-orange-500/40 text-orange-300" : "bg-neutral-950 border-neutral-800 text-neutral-500"}`}
+                            className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold flex items-center justify-center gap-1 border ${active ? "bg-orange-500/15 border-orange-500/40 text-orange-700" : "bg-white border-neutral-200 text-neutral-500"}`}
                           >
                             <span className="font-black">{r.symbole}</span> {r.label}
                           </button>
@@ -1047,12 +1047,12 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
               );
             })}
           </div>
-          <button onClick={addRow} className="mt-3 text-xs font-semibold text-orange-400 flex items-center gap-1">
+          <button onClick={addRow} className="mt-3 text-xs font-semibold text-orange-600 flex items-center gap-1">
             <Plus size={14} /> Ajouter un atelier
           </button>
-          <div className="mt-3 bg-neutral-950 rounded-xl px-4 py-3 flex items-center justify-between">
+          <div className="mt-3 bg-white rounded-xl px-4 py-3 flex items-center justify-between">
             <span className="text-xs text-neutral-500 font-semibold uppercase">Tonnage de la séance</span>
-            <span className="text-xl font-black text-neutral-100">{Math.round(tonnageTotal).toLocaleString("fr-FR")} kg</span>
+            <span className="text-xl font-black text-neutral-900">{Math.round(tonnageTotal).toLocaleString("fr-FR")} kg</span>
           </div>
         </Card>
       )}
@@ -1066,27 +1066,27 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
             className="w-full accent-orange-500"
           />
           <div className="flex items-center justify-between mt-1">
-            <span className="text-2xl font-black text-orange-400">{rpe}</span>
-            <span className="text-xs text-neutral-400">{BORG.find((b) => b.v === rpe)?.label}</span>
+            <span className="text-2xl font-black text-orange-600">{rpe}</span>
+            <span className="text-xs text-neutral-600">{BORG.find((b) => b.v === rpe)?.label}</span>
           </div>
 
           <div className="mt-4">
             <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-2">Durée de la séance (min)</p>
             <input
               type="number" value={duree} onChange={(e) => setDuree(parseInt(e.target.value) || 0)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200"
+              className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800"
             />
           </div>
 
           <div className="mt-4 bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
             <div>
-              <span className="text-xs text-orange-300/80 font-semibold uppercase block">Charge de séance</span>
+              <span className="text-xs text-orange-700/80 font-semibold uppercase block">Charge de séance</span>
               <span className="text-[10px] text-neutral-500">RPE × durée</span>
             </div>
-            <span className="text-2xl font-black text-orange-400">{chargeSeance} UA</span>
+            <span className="text-2xl font-black text-orange-600">{chargeSeance} UA</span>
           </div>
 
-          <button onClick={enregistrer} className="w-full mt-4 bg-orange-500 text-neutral-950 font-bold rounded-xl py-3 active:scale-[0.98] transition">
+          <button onClick={enregistrer} className="w-full mt-4 bg-orange-500 text-neutral-50 font-bold rounded-xl py-3 active:scale-[0.98] transition">
             Enregistrer la séance
           </button>
         </Card>
@@ -1098,7 +1098,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
           <div className="flex items-end gap-2 h-32">
             {seancesHistorique.map((s, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                <div className="w-full bg-neutral-800 rounded-t-md relative flex items-end" style={{ height: "100%" }}>
+                <div className="w-full bg-neutral-200 rounded-t-md relative flex items-end" style={{ height: "100%" }}>
                   <div
                     className="w-full bg-orange-500 rounded-t-md transition-all"
                     style={{ height: `${(s.charge / maxCharge) * 100}%` }}
@@ -1110,17 +1110,17 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
           </div>
           <div className="mt-4 space-y-2">
             {seancesHistorique.slice().reverse().map((s, i) => (
-              <div key={i} className="border-t border-neutral-800 pt-2">
+              <div key={i} className="border-t border-neutral-200 pt-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-400">{s.date}</span>
+                  <span className="text-neutral-600">{s.date}</span>
                   <span className="text-neutral-500">{s.tonnage} kg</span>
                   <span className="text-neutral-500">RPE {s.rpe}</span>
-                  <span className="font-bold text-orange-400">{s.charge} UA</span>
+                  <span className="font-bold text-orange-600">{s.charge} UA</span>
                 </div>
                 {s.ateliers && s.ateliers.length > 0 && (
                   <div className="mt-1.5 space-y-1">
                     {s.ateliers.map((a, ai) => (
-                      <div key={ai} className="flex items-center justify-between text-[10px] text-neutral-600">
+                      <div key={ai} className="flex items-center justify-between text-[10px] text-neutral-400">
                         <span>{a.atelier}</span>
                         <span>{a.nbSeries}× · {a.chargeMoyenne}kg (moy.) · {a.repsMoyenne} rép (moy.)</span>
                       </div>
@@ -1162,8 +1162,8 @@ function ResultatsConversion({ charge100, mobileActif, zoneAtelier }) {
   return (
     <>
       <Card className="bg-orange-500/10 border-orange-500/30">
-        <p className="text-xs uppercase tracking-widest text-orange-300/80 font-semibold">Charge théorique R1 estimée (100 %)</p>
-        <p className="text-3xl font-black text-orange-400 mt-1">{charge100.toFixed(1)} <span className="text-base font-semibold text-neutral-500">kg</span></p>
+        <p className="text-xs uppercase tracking-widest text-orange-700/80 font-semibold">Charge théorique R1 estimée (100 %)</p>
+        <p className="text-3xl font-black text-orange-600 mt-1">{charge100.toFixed(1)} <span className="text-base font-semibold text-neutral-500">kg</span></p>
       </Card>
 
       <Card>
@@ -1174,20 +1174,20 @@ function ResultatsConversion({ charge100, mobileActif, zoneAtelier }) {
             const val = charge100 * PCT_MOBILE[m.id];
             const isRef = mobileActif && m.id === mobileActif.id;
             return (
-              <div key={m.id} className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${isRef ? c.bgSoft : "bg-neutral-950"}`}>
+              <div key={m.id} className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${isRef ? c.bgSoft : "bg-white"}`}>
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${c.bg}`} />
-                  <span className={`text-sm font-semibold ${isRef ? c.text : "text-neutral-300"}`}>{m.label} · {m.nom}</span>
+                  <span className={`text-sm font-semibold ${isRef ? c.text : "text-neutral-700"}`}>{m.label} · {m.nom}</span>
                   {zoneAtelier && zoneAtelier.mobileId === m.id && (
-                    <span className="text-[9px] uppercase font-bold text-neutral-500 bg-neutral-900 rounded px-1.5 py-0.5">mon projet</span>
+                    <span className="text-[9px] uppercase font-bold text-neutral-500 bg-white rounded px-1.5 py-0.5">mon projet</span>
                   )}
                 </div>
-                <span className={`text-sm font-black ${isRef ? c.text : "text-neutral-200"}`}>{val.toFixed(1)} kg</span>
+                <span className={`text-sm font-black ${isRef ? c.text : "text-neutral-800"}`}>{val.toFixed(1)} kg</span>
               </div>
             );
           })}
         </div>
-        <p className="text-[10px] text-neutral-600 mt-3">Estimation à titre informatif à partir des % moyens de chaque mobile (R1 95 %, R6 80 %, R10 70 %, R15 55 %, R25 40 %) — à ajuster selon le ressenti réel.</p>
+        <p className="text-[10px] text-neutral-400 mt-3">Estimation à titre informatif à partir des % moyens de chaque mobile (R1 95 %, R6 80 %, R10 70 %, R15 55 %, R25 40 %) — à ajuster selon le ressenti réel.</p>
       </Card>
     </>
   );
@@ -1201,10 +1201,10 @@ function Convertisseur() {
 
   return (
     <div className="px-5 pb-6 space-y-4">
-      <Card className="bg-neutral-900/60">
+      <Card className="bg-white/60">
         <div className="flex gap-2">
           <Info size={15} className="text-neutral-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <p className="text-xs text-neutral-600 leading-relaxed">
             Renseigne une charge connue et le mobile auquel elle correspond : l'appli estime ta charge maximale (100 %) et la charge équivalente pour chacun des autres mobiles. Pour la recherche guidée de ta charge de référence atelier par atelier, va dans l'onglet Suivi.
           </p>
         </div>
@@ -1215,7 +1215,7 @@ function Convertisseur() {
         <input
           type="number" value={charge} onChange={(e) => setCharge(e.target.value)}
           placeholder="ex : 40"
-          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-lg font-bold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
         <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold mt-4 mb-2">Correspond au mobile</p>
         <div className="grid grid-cols-5 gap-1">
@@ -1224,7 +1224,7 @@ function Convertisseur() {
             const active = mobileRef.id === m.id;
             return (
               <button key={m.id} onClick={() => setMobileRef(m)}
-                className={`rounded-lg py-2 text-center border transition ${active ? `${c.bgSoft} ${c.border} ring-1 ${c.ring}` : "bg-neutral-950 border-neutral-800"}`}>
+                className={`rounded-lg py-2 text-center border transition ${active ? `${c.bgSoft} ${c.border} ring-1 ${c.ring}` : "bg-white border-neutral-200"}`}>
                 <p className={`text-[11px] font-black ${active ? c.text : "text-neutral-500"}`}>{m.label}</p>
               </button>
             );
@@ -1259,16 +1259,16 @@ function EssaiForm({ atelier, zone, mobileZoneId, onValider, onAnnuler }) {
           const est = pct ? parseFloat(e.charge) / (pct / 100) : null;
           const isLast = dernierEssai === e;
           return (
-            <div key={i} className={`rounded-xl p-2.5 border ${isLast ? "bg-orange-500/10 border-orange-500/40" : "bg-neutral-950 border-neutral-800"}`}>
+            <div key={i} className={`rounded-xl p-2.5 border ${isLast ? "bg-orange-500/10 border-orange-500/40" : "bg-white border-neutral-200"}`}>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black text-neutral-500 w-10">Essai {i + 1}</span>
                 <input value={e.charge} onChange={(ev) => updateEssai(i, "charge", ev.target.value)} placeholder="kg" type="number"
-                  className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-2 py-1.5 text-xs text-neutral-200 text-center" />
+                  className="flex-1 bg-white border border-neutral-200 rounded-lg px-2 py-1.5 text-xs text-neutral-800 text-center" />
                 <input value={e.reps} onChange={(ev) => updateEssai(i, "reps", ev.target.value)} placeholder="rép. réalisées" type="number"
-                  className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-2 py-1.5 text-xs text-neutral-200 text-center" />
+                  className="flex-1 bg-white border border-neutral-200 rounded-lg px-2 py-1.5 text-xs text-neutral-800 text-center" />
               </div>
               {est && (
-                <p className={`text-[10px] mt-1.5 ml-12 ${isLast ? "text-orange-300" : "text-neutral-600"}`}>
+                <p className={`text-[10px] mt-1.5 ml-12 ${isLast ? "text-orange-700" : "text-neutral-400"}`}>
                   ≈ {est.toFixed(1)} kg en R1 théorique {isLast && "· essai retenu"}
                 </p>
               )}
@@ -1278,22 +1278,22 @@ function EssaiForm({ atelier, zone, mobileZoneId, onValider, onAnnuler }) {
       </div>
 
       {dernierEssai && (
-        <div className="mt-3 bg-neutral-950 rounded-xl px-4 py-3 space-y-1.5">
+        <div className="mt-3 bg-white rounded-xl px-4 py-3 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-xs text-neutral-500 font-semibold uppercase">R1 théorique</span>
-            <span className="text-lg font-black text-orange-400">{charge100.toFixed(1)} kg</span>
+            <span className="text-lg font-black text-orange-600">{charge100.toFixed(1)} kg</span>
           </div>
           {mobileCharge != null && (
             <div className="flex items-center justify-between">
               <span className="text-xs text-neutral-500 font-semibold uppercase">Charge mobile projet</span>
-              <span className="text-lg font-black text-neutral-100">{mobileCharge.toFixed(1)} kg</span>
+              <span className="text-lg font-black text-neutral-900">{mobileCharge.toFixed(1)} kg</span>
             </div>
           )}
         </div>
       )}
 
       <div className="flex gap-2 mt-3">
-        <button onClick={onAnnuler} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-500 bg-neutral-950 border border-neutral-800">
+        <button onClick={onAnnuler} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-500 bg-white border border-neutral-200">
           Annuler
         </button>
         <button
@@ -1307,7 +1307,7 @@ function EssaiForm({ atelier, zone, mobileZoneId, onValider, onAnnuler }) {
             mobileId: mobileZoneId || null,
             mobileCharge: mobileCharge,
           })}
-          className={`flex-1 rounded-xl py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 ${dernierEssai ? "bg-orange-500 text-neutral-950" : "bg-neutral-900 text-neutral-700"}`}
+          className={`flex-1 rounded-xl py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 ${dernierEssai ? "bg-orange-500 text-neutral-50" : "bg-white text-neutral-300"}`}
         >
           <Check size={14} /> Enregistrer
         </button>
@@ -1323,10 +1323,10 @@ function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) 
 
   return (
     <div className="px-5 pb-6 space-y-4">
-      <Card className="bg-neutral-900/60">
+      <Card className="bg-white/60">
         <div className="flex gap-2">
           <Info size={15} className="text-neutral-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <p className="text-xs text-neutral-600 leading-relaxed">
             Pour chaque atelier de ton projet, cherche ta charge de référence en 3-4 essais (15 à 20 rép.), puis enregistre. Tu retrouves ici ta progression, atelier par atelier. Ces données sont enregistrées de façon anonyme (par numéro) pour ton professeur.
           </p>
         </div>
@@ -1349,23 +1349,23 @@ function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) 
           <Card key={atelier}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-neutral-100">{atelier}</p>
+                <p className="text-sm font-bold text-neutral-900">{atelier}</p>
                 {z && <p className={`text-[10px] ${colorMap[z.color].text}`}>{z.label}</p>}
               </div>
               {dernier ? (
                 <div className="text-right">
-                  <p className="text-sm font-black text-orange-400">{dernier.chargeRef} kg</p>
-                  <p className="text-[9px] text-neutral-600">{dernier.date}</p>
+                  <p className="text-sm font-black text-orange-600">{dernier.chargeRef} kg</p>
+                  <p className="text-[9px] text-neutral-400">{dernier.date}</p>
                 </div>
               ) : (
-                <span className="text-[10px] text-neutral-600">non testé</span>
+                <span className="text-[10px] text-neutral-400">non testé</span>
               )}
             </div>
 
             {entries.length > 1 && (
               <div className="flex items-end gap-1 h-10 mt-3">
                 {entries.map((e, i) => (
-                  <div key={i} className="flex-1 bg-neutral-800 rounded-t-sm flex items-end" style={{ height: "100%" }}>
+                  <div key={i} className="flex-1 bg-neutral-200 rounded-t-sm flex items-end" style={{ height: "100%" }}>
                     <div className="w-full bg-orange-500/70 rounded-t-sm" style={{ height: `${(e.chargeRef / maxCharge) * 100}%` }} />
                   </div>
                 ))}
@@ -1373,7 +1373,7 @@ function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) 
             )}
 
             {!isOuvert && (
-              <button onClick={() => setAtelierOuvert(atelier)} className="w-full mt-3 rounded-xl py-2 text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/30">
+              <button onClick={() => setAtelierOuvert(atelier)} className="w-full mt-3 rounded-xl py-2 text-xs font-bold text-orange-600 bg-orange-500/10 border border-orange-500/30">
                 Nouveau test
               </button>
             )}
@@ -1420,20 +1420,20 @@ function ChampNomAdmin({ nomAdmin, onChanger }) {
 
   if (!edition) {
     return (
-      <button onClick={() => { const d = decomposeCivilite(nomAdmin); setCivilite(d.civilite); setValeur(d.nom); setEdition(true); }} className="flex items-center gap-1.5 text-xs text-neutral-400">
-        <Pencil size={12} /> Nom affiché aux élèves : <span className="font-bold text-neutral-200">{nomAdmin}</span>
+      <button onClick={() => { const d = decomposeCivilite(nomAdmin); setCivilite(d.civilite); setValeur(d.nom); setEdition(true); }} className="flex items-center gap-1.5 text-xs text-neutral-600">
+        <Pencil size={12} /> Nom affiché aux élèves : <span className="font-bold text-neutral-800">{nomAdmin}</span>
       </button>
     );
   }
   return (
     <div className="flex items-center gap-2">
-      <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1.5 text-sm text-neutral-100">
+      <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-white border border-neutral-200 rounded-lg px-2 py-1.5 text-sm text-neutral-900">
         <option value="Mr">Mr</option>
         <option value="Mme">Mme</option>
       </select>
-      <input value={valeur} onChange={(e) => setValeur(e.target.value)} autoFocus className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm text-neutral-100" />
-      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={13} /></button>
-      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+      <input value={valeur} onChange={(e) => setValeur(e.target.value)} autoFocus className="flex-1 bg-white border border-neutral-200 rounded-lg px-3 py-1.5 text-sm text-neutral-900" />
+      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-50"><Check size={13} /></button>
+      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-200 text-neutral-600">✕</button>
     </div>
   );
 }
@@ -1449,16 +1449,16 @@ function ChampPinAdmin({ pin, onChanger }) {
   };
   if (!edition) {
     return (
-      <button onClick={() => setEdition(true)} className="flex items-center gap-1.5 text-xs text-neutral-400">
-        <Lock size={12} /> Code d'accès : <span className="font-bold text-neutral-200">{pin}</span> · modifier
+      <button onClick={() => setEdition(true)} className="flex items-center gap-1.5 text-xs text-neutral-600">
+        <Lock size={12} /> Code d'accès : <span className="font-bold text-neutral-800">{pin}</span> · modifier
       </button>
     );
   }
   return (
     <div className="flex items-center gap-2">
-      <input value={valeur} onChange={(e) => setValeur(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-32 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm text-neutral-100" />
-      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={13} /></button>
-      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+      <input value={valeur} onChange={(e) => setValeur(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-32 bg-white border border-neutral-200 rounded-lg px-3 py-1.5 text-sm text-neutral-900" />
+      <button onClick={valider} className="p-1.5 rounded-full bg-orange-500 text-neutral-50"><Check size={13} /></button>
+      <button onClick={() => setEdition(false)} className="p-1.5 rounded-full border border-neutral-200 text-neutral-600">✕</button>
     </div>
   );
 }
@@ -1506,15 +1506,15 @@ function AccesTab({ acces, onSauver }) {
         <Card>
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-2 text-sm text-neutral-100">
+              <select value={civilite} onChange={(e) => setCivilite(e.target.value)} className="bg-white border border-neutral-200 rounded-lg px-2 py-2 text-sm text-neutral-900">
                 <option value="Mr">Mr</option>
                 <option value="Mme">Mme</option>
               </select>
-              <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du collègue" className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-100" />
+              <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du collègue" className="flex-1 bg-white border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-900" />
             </div>
-            <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} placeholder="Code PIN (4 à 6 chiffres)" className="bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-100" />
-            <button onClick={ajouter} className="bg-orange-500 text-neutral-950 font-bold rounded-lg py-2 text-sm">Ajouter</button>
-            {erreur && <p className="text-xs text-rose-400">{erreur}</p>}
+            <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} placeholder="Code PIN (4 à 6 chiffres)" className="bg-white border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-900" />
+            <button onClick={ajouter} className="bg-orange-500 text-neutral-50 font-bold rounded-lg py-2 text-sm">Ajouter</button>
+            {erreur && <p className="text-xs text-rose-600">{erreur}</p>}
           </div>
         </Card>
       </div>
@@ -1526,14 +1526,14 @@ function AccesTab({ acces, onSauver }) {
           {collegues.map((c) => (
             <Card key={c.nom} className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <p className="text-sm font-bold text-neutral-100">{c.nom}</p>
+                <p className="text-sm font-bold text-neutral-900">{c.nom}</p>
                 <button onClick={() => setPinVisible(pinVisible === c.nom ? null : c.nom)} className="text-xs text-neutral-500 mt-0.5">
                   Code : {pinVisible === c.nom ? c.pin : "••••"}
                 </button>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <ReinitPinCollegue nomCollegue={c.nom} onReinit={reinitPin} />
-                <button onClick={() => retirer(c)} className="text-[11px] font-bold text-rose-400 border border-rose-500/30 rounded-full px-2.5 py-1">Retirer</button>
+                <button onClick={() => retirer(c)} className="text-[11px] font-bold text-rose-600 border border-rose-500/30 rounded-full px-2.5 py-1">Retirer</button>
               </div>
             </Card>
           ))}
@@ -1547,13 +1547,13 @@ function ReinitPinCollegue({ nomCollegue, onReinit }) {
   const [ouvert, setOuvert] = useState(false);
   const [pin, setPin] = useState("");
   if (!ouvert) {
-    return <button onClick={() => setOuvert(true)} className="text-[11px] font-bold text-neutral-400 border border-neutral-800 rounded-full px-2.5 py-1">Réinitialiser le PIN</button>;
+    return <button onClick={() => setOuvert(true)} className="text-[11px] font-bold text-neutral-600 border border-neutral-200 rounded-full px-2.5 py-1">Réinitialiser le PIN</button>;
   }
   return (
     <div className="flex items-center gap-1.5">
-      <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-24 bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-xs text-neutral-100" />
-      <button onClick={() => { if (/^\d{4,6}$/.test(pin)) { onReinit(nomCollegue, pin); setOuvert(false); setPin(""); } }} className="p-1.5 rounded-full bg-orange-500 text-neutral-950"><Check size={12} /></button>
-      <button onClick={() => setOuvert(false)} className="p-1.5 rounded-full border border-neutral-800 text-neutral-400">✕</button>
+      <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={6} autoFocus placeholder="Nouveau code" className="w-24 bg-white border border-neutral-200 rounded-lg px-2 py-1 text-xs text-neutral-900" />
+      <button onClick={() => { if (/^\d{4,6}$/.test(pin)) { onReinit(nomCollegue, pin); setOuvert(false); setPin(""); } }} className="p-1.5 rounded-full bg-orange-500 text-neutral-50"><Check size={12} /></button>
+      <button onClick={() => setOuvert(false)} className="p-1.5 rounded-full border border-neutral-200 text-neutral-600">✕</button>
     </div>
   );
 }
@@ -1654,10 +1654,10 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   if (!profConnecte) {
     return (
       <div className="px-5 pb-6 space-y-4">
-        <Card className="bg-neutral-900/60">
+        <Card className="bg-white/60">
           <div className="flex gap-2">
             <Info size={15} className="text-neutral-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-neutral-400 leading-relaxed">Espace réservé au professeur : ton code d'accès personnel te donne uniquement accès à tes propres classes — jamais à celles d'un collègue.</p>
+            <p className="text-xs text-neutral-600 leading-relaxed">Espace réservé au professeur : ton code d'accès personnel te donne uniquement accès à tes propres classes — jamais à celles d'un collègue.</p>
           </div>
         </Card>
         <Card>
@@ -1665,10 +1665,10 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
           <input
             type="password" value={pin} onChange={(e) => { setPin(e.target.value); setErreur(false); }}
             placeholder="Code"
-            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-lg font-bold text-neutral-100 text-center tracking-widest placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-lg font-bold text-neutral-900 text-center tracking-widest placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
-          {erreur && <p className="text-xs text-rose-400 mt-2">Code incorrect.</p>}
-          <button onClick={valider} className="w-full mt-3 bg-orange-500 text-neutral-950 font-bold rounded-xl py-3">Déverrouiller</button>
+          {erreur && <p className="text-xs text-rose-600 mt-2">Code incorrect.</p>}
+          <button onClick={valider} className="w-full mt-3 bg-orange-500 text-neutral-50 font-bold rounded-xl py-3">Déverrouiller</button>
         </Card>
       </div>
     );
@@ -1677,53 +1677,53 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   return (
     <div className="px-5 pb-6 space-y-4">
       {onDeconnexion && (
-        <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3">
+        <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-2xl px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-orange-500/15 flex items-center justify-center">
-              <User size={15} className="text-orange-400" />
+              <User size={15} className="text-orange-600" />
             </div>
-            <p className="text-sm font-bold text-neutral-100">{profConnecte.nom}</p>
+            <p className="text-sm font-bold text-neutral-900">{profConnecte.nom}</p>
           </div>
-          <button onClick={onDeconnexion} className="w-9 h-9 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center">
+          <button onClick={onDeconnexion} className="w-9 h-9 rounded-xl bg-white border border-neutral-200 flex items-center justify-center">
             <LogOut size={15} className="text-neutral-500" />
           </button>
         </div>
       )}
       {!classeChoisie && (
         <>
-          <Card className="bg-neutral-900/60">
+          <Card className="bg-white/60">
             <div className="flex gap-2">
               <Info size={15} className="text-neutral-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-neutral-400 leading-relaxed">Connecté en tant que <span className="text-neutral-200 font-semibold">{profConnecte.nom}</span>. Choisis la classe que tu veux observer.</p>
+              <p className="text-xs text-neutral-600 leading-relaxed">Connecté en tant que <span className="text-neutral-800 font-semibold">{profConnecte.nom}</span>. Choisis la classe que tu veux observer.</p>
             </div>
           </Card>
           <PartagerApp />
-          <button onClick={() => setImportOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5 text-xs font-bold text-orange-300">
+          <button onClick={() => setImportOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5 text-xs font-bold text-orange-700">
             <Upload size={13} /> Importer une liste d'élèves
           </button>
-          <button onClick={rafraichirClasses} disabled={rafraichissement} className="w-full flex items-center justify-center gap-2 bg-neutral-900 border border-neutral-800 rounded-xl py-2.5 text-xs font-bold text-neutral-400">
+          <button onClick={rafraichirClasses} disabled={rafraichissement} className="w-full flex items-center justify-center gap-2 bg-white border border-neutral-200 rounded-xl py-2.5 text-xs font-bold text-neutral-600">
             <RotateCcw size={13} className={rafraichissement ? "animate-spin" : ""} /> {rafraichissement ? "Actualisation…" : "Actualiser les classes"}
           </button>
           {classes && classes.length === 0 && <Card><p className="text-sm text-neutral-500">Aucune classe enregistrée pour l'instant.</p></Card>}
           {classes && classes.map((c) => (
-            <button key={c} onClick={() => choisirClasse(c)} className="w-full flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3.5">
-              <span className="text-sm font-bold text-neutral-100">{c}</span>
-              <ChevronRight size={16} className="text-neutral-600" />
+            <button key={c} onClick={() => choisirClasse(c)} className="w-full flex items-center justify-between bg-white border border-neutral-200 rounded-2xl px-4 py-3.5">
+              <span className="text-sm font-bold text-neutral-900">{c}</span>
+              <ChevronRight size={16} className="text-neutral-400" />
             </button>
           ))}
 
           {classes && classes.length > 0 && confirmReset !== "tout" && (
-            <button onClick={() => setConfirmReset("tout")} className="w-full text-center text-xs font-semibold text-rose-500/70 py-2">
+            <button onClick={() => setConfirmReset("tout")} className="w-full text-center text-xs font-semibold text-rose-600/70 py-2">
               Réinitialiser toutes les données
             </button>
           )}
           {confirmReset === "tout" && (
             <Card className="border-rose-500/40 bg-rose-500/5">
-              <p className="text-sm font-bold text-rose-400">Tout réinitialiser ?</p>
-              <p className="text-xs text-neutral-400 mt-1">Supprime définitivement toutes les classes et toutes les données de tous les élèves. Impossible à annuler.</p>
+              <p className="text-sm font-bold text-rose-600">Tout réinitialiser ?</p>
+              <p className="text-xs text-neutral-600 mt-1">Supprime définitivement toutes les classes et toutes les données de tous les élèves. Impossible à annuler.</p>
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setConfirmReset(null)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-400 bg-neutral-900 border border-neutral-800">Annuler</button>
-                <button disabled={resetEnCours} onClick={confirmerReset} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-950 bg-rose-500">
+                <button onClick={() => setConfirmReset(null)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                <button disabled={resetEnCours} onClick={confirmerReset} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-50 bg-rose-500">
                   {resetEnCours ? "…" : "Confirmer la suppression"}
                 </button>
               </div>
@@ -1751,28 +1751,28 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
               <Card key={eleve.numero}>
                 <button onClick={() => ouvrirEleve(eleve.numero)} className="w-full flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
-                      <User size={14} className="text-neutral-400" />
+                    <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center">
+                      <User size={14} className="text-neutral-600" />
                     </div>
-                    <p className="text-sm font-bold text-neutral-100">{eleve.prenom} {eleve.nom}</p>
+                    <p className="text-sm font-bold text-neutral-900">{eleve.prenom} {eleve.nom}</p>
                   </div>
-                  <ChevronRight size={16} className={`text-neutral-600 transition ${isOuvert ? "rotate-90" : ""}`} />
+                  <ChevronRight size={16} className={`text-neutral-400 transition ${isOuvert ? "rotate-90" : ""}`} />
                 </button>
 
                 {isOuvert && (
                   <div className="mt-3 space-y-3">
-                    {!data && <p className="text-xs text-neutral-600">Chargement…</p>}
+                    {!data && <p className="text-xs text-neutral-400">Chargement…</p>}
 
                     {data && (
                       <div>
                         <p className="text-[10px] uppercase font-bold text-neutral-500 mb-1.5">Tests de charge de référence (R15-R20)</p>
-                        {data.tests.length === 0 && <p className="text-xs text-neutral-600">Aucun test enregistré.</p>}
+                        {data.tests.length === 0 && <p className="text-xs text-neutral-400">Aucun test enregistré.</p>}
                         <div className="space-y-1.5">
                           {data.tests.slice().reverse().map((e, i) => (
-                            <div key={i} className="bg-neutral-950 rounded-lg px-3 py-2 text-xs">
+                            <div key={i} className="bg-white rounded-lg px-3 py-2 text-xs">
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-neutral-200">{e.atelier}</span>
-                                <span className="text-neutral-600">{e.date}</span>
+                                <span className="font-semibold text-neutral-800">{e.atelier}</span>
+                                <span className="text-neutral-400">{e.date}</span>
                               </div>
                               <div className="flex items-center gap-3 mt-1 text-[10px] text-neutral-500">
                                 <span>Réf. {e.chargeRef}kg × {e.repsRef}rép</span>
@@ -1788,12 +1788,12 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                     {data && (
                       <div>
                         <p className="text-[10px] uppercase font-bold text-neutral-500 mb-1.5">Séances d'entraînement</p>
-                        {data.seances.length === 0 && <p className="text-xs text-neutral-600">Aucune séance enregistrée.</p>}
+                        {data.seances.length === 0 && <p className="text-xs text-neutral-400">Aucune séance enregistrée.</p>}
                         <div className="space-y-2">
                           {data.seances.slice().reverse().map((s, i) => (
-                            <div key={i} className="bg-neutral-950 rounded-lg px-3 py-2 text-xs">
+                            <div key={i} className="bg-white rounded-lg px-3 py-2 text-xs">
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-neutral-200">{s.date}</span>
+                                <span className="font-semibold text-neutral-800">{s.date}</span>
                                 <span className="text-neutral-500">{s.tonnage}kg · RPE {s.rpe} · {s.charge} UA</span>
                               </div>
                               {s.ateliers && s.ateliers.length > 0 && (
@@ -1816,16 +1816,16 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                     )}
 
                     {data && confirmResetEleve !== eleve.numero && (
-                      <button onClick={() => setConfirmResetEleve(eleve.numero)} className="w-full text-center text-[11px] font-semibold text-rose-500/60 py-1.5">
+                      <button onClick={() => setConfirmResetEleve(eleve.numero)} className="w-full text-center text-[11px] font-semibold text-rose-600/60 py-1.5">
                         Réinitialiser cet élève
                       </button>
                     )}
                     {confirmResetEleve === eleve.numero && (
                       <div className="bg-rose-500/5 border border-rose-500/40 rounded-xl p-3">
-                        <p className="text-xs text-neutral-300">Effacer toutes les données de <span className="font-bold">{eleve.prenom} {eleve.nom}</span> (tests, séances, projet) ? L'élève reste dans la classe, prêt pour une nouvelle utilisation à zéro.</p>
+                        <p className="text-xs text-neutral-700">Effacer toutes les données de <span className="font-bold">{eleve.prenom} {eleve.nom}</span> (tests, séances, projet) ? L'élève reste dans la classe, prêt pour une nouvelle utilisation à zéro.</p>
                         <div className="flex gap-2 mt-2.5">
-                          <button onClick={() => setConfirmResetEleve(null)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-400 bg-neutral-900 border border-neutral-800">Annuler</button>
-                          <button disabled={resetEnCours} onClick={() => confirmerResetEleve(eleve.numero)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-950 bg-rose-500">
+                          <button onClick={() => setConfirmResetEleve(null)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                          <button disabled={resetEnCours} onClick={() => confirmerResetEleve(eleve.numero)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-50 bg-rose-500">
                             {resetEnCours ? "…" : "Confirmer"}
                           </button>
                         </div>
@@ -1838,17 +1838,17 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
           })}
 
           {!chargement && confirmReset !== "classe" && (
-            <button onClick={() => setConfirmReset("classe")} className="w-full text-center text-xs font-semibold text-rose-500/70 py-2">
+            <button onClick={() => setConfirmReset("classe")} className="w-full text-center text-xs font-semibold text-rose-600/70 py-2">
               Réinitialiser cette classe
             </button>
           )}
           {confirmReset === "classe" && (
             <Card className="border-rose-500/40 bg-rose-500/5">
-              <p className="text-sm font-bold text-rose-400">Réinitialiser {classeChoisie} ?</p>
-              <p className="text-xs text-neutral-400 mt-1">Supprime définitivement les {mapping.length} élève(s) de cette classe et toutes leurs données (tests, séances). Impossible à annuler.</p>
+              <p className="text-sm font-bold text-rose-600">Réinitialiser {classeChoisie} ?</p>
+              <p className="text-xs text-neutral-600 mt-1">Supprime définitivement les {mapping.length} élève(s) de cette classe et toutes leurs données (tests, séances). Impossible à annuler.</p>
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setConfirmReset(null)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-400 bg-neutral-900 border border-neutral-800">Annuler</button>
-                <button disabled={resetEnCours} onClick={confirmerReset} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-950 bg-rose-500">
+                <button onClick={() => setConfirmReset(null)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                <button disabled={resetEnCours} onClick={confirmerReset} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-50 bg-rose-500">
                   {resetEnCours ? "…" : "Confirmer la suppression"}
                 </button>
               </div>
@@ -1925,7 +1925,7 @@ function ChronoRecup() {
             const cc = colorMap[m.color];
             return (
               <button key={m.id} onClick={() => selectMobile(m)}
-                className={`rounded-lg py-2 text-xs font-bold ${active ? `${cc.bg} text-neutral-950` : "bg-neutral-950 text-neutral-500 border border-neutral-800"}`}>
+                className={`rounded-lg py-2 text-xs font-bold ${active ? `${cc.bg} text-neutral-50` : "bg-white text-neutral-500 border border-neutral-200"}`}>
                 {m.label}
               </button>
             );
@@ -1945,15 +1945,15 @@ function ChronoRecup() {
               style={{ transition: "stroke-dashoffset 1s linear" }}
             />
           </svg>
-          <span className="text-5xl font-black text-neutral-50 tabular-nums">{seconds}</span>
+          <span className="text-5xl font-black text-neutral-950 tabular-nums">{seconds}</span>
         </div>
         <p className="text-xs text-neutral-500 mt-3">récupération {mobile.label} — {mobile.recup}</p>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={() => setRunning((r) => !r)} className={`w-16 h-16 rounded-full flex items-center justify-center ${c.bg} text-neutral-950`}>
+          <button onClick={() => setRunning((r) => !r)} className={`w-16 h-16 rounded-full flex items-center justify-center ${c.bg} text-neutral-50`}>
             {running ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
           </button>
-          <button onClick={reset} className="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-300">
+          <button onClick={reset} className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center text-neutral-700">
             <RotateCcw size={20} />
           </button>
         </div>
@@ -2123,7 +2123,7 @@ export default function MuscuPro() {
   };
 
   if (!profilLoaded) {
-    return <div className="min-h-screen bg-neutral-950" />;
+    return <div className="min-h-screen bg-white" />;
   }
   if (!profil || editing) {
     return (
@@ -2140,9 +2140,9 @@ export default function MuscuPro() {
   if (profil.type === "prof") {
     const estAdmin = profil.nom === acces.nomAdmin;
     return (
-      <div className="min-h-screen bg-neutral-950 flex justify-center">
-        <div className="w-full max-w-sm bg-neutral-950 min-h-screen flex flex-col">
-          <div className="sticky top-0 z-10 bg-neutral-950/95 backdrop-blur border-b border-neutral-900">
+      <div className="min-h-screen bg-white flex justify-center">
+        <div className="w-full max-w-sm bg-white min-h-screen flex flex-col">
+          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-neutral-100">
             <Header title="Mode professeur" subtitle="Correspondance numéro ↔ nom" />
           </div>
           {estAdmin && (
@@ -2155,7 +2155,7 @@ export default function MuscuPro() {
                 <button
                   key={t.id}
                   onClick={() => setProfTab(t.id)}
-                  className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border transition ${profTab === t.id ? "bg-orange-500 text-neutral-950 border-orange-500" : "border-neutral-800 text-neutral-400"}`}
+                  className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border transition ${profTab === t.id ? "bg-orange-500 text-neutral-50 border-orange-500" : "border-neutral-200 text-neutral-600"}`}
                 >
                   {t.label}
                 </button>
@@ -2174,7 +2174,7 @@ export default function MuscuPro() {
                 <select
                   value={collegueVu}
                   onChange={(e) => setCollegueVu(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-neutral-100"
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900"
                 >
                   <option value="" disabled>Choisir un collègue...</option>
                   {(acces.collegues || []).map((c) => (
@@ -2202,9 +2202,9 @@ export default function MuscuPro() {
 
   // ---- Connecté en tant qu'élève : appli complète ----
   return (
-    <div className="min-h-screen bg-neutral-950 flex justify-center">
-      <div className="w-full max-w-sm bg-neutral-950 min-h-screen flex flex-col">
-        <div className="sticky top-0 z-10 bg-neutral-950/95 backdrop-blur border-b border-neutral-900">
+    <div className="min-h-screen bg-white flex justify-center">
+      <div className="w-full max-w-sm bg-white min-h-screen flex flex-col">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-neutral-100">
           <Header title={titles[tab][0]} subtitle={titles[tab][1]} />
         </div>
 
@@ -2226,13 +2226,13 @@ export default function MuscuPro() {
           {tab === "chrono" && <ChronoRecup />}
         </div>
 
-        <div className="sticky bottom-0 bg-neutral-950 border-t border-neutral-900 flex justify-around py-2 px-1">
+        <div className="sticky bottom-0 bg-white border-t border-neutral-100 flex justify-around py-2 px-1">
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id;
             return (
               <button key={id} onClick={() => setTab(id)} className="flex flex-col items-center gap-1 px-2 py-1.5 min-w-0">
-                <Icon size={18} className={active ? "text-orange-400" : "text-neutral-600"} />
-                <span className={`text-[9px] font-semibold ${active ? "text-orange-400" : "text-neutral-600"}`}>{label}</span>
+                <Icon size={18} className={active ? "text-orange-600" : "text-neutral-400"} />
+                <span className={`text-[9px] font-semibold ${active ? "text-orange-600" : "text-neutral-400"}`}>{label}</span>
               </button>
             );
           })}
