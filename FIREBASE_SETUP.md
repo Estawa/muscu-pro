@@ -24,15 +24,7 @@ L'appli a besoin d'une base de données pour que les données des élèves (mapp
    cp .env.example .env.local
    ```
 2. Ouvre `.env.local` et remplis chaque ligne avec les valeurs de `firebaseConfig` récupérées à l'étape 2 (par exemple `VITE_FIREBASE_API_KEY=AIza...`).
-3. Renseigne `VITE_PROFS` avec la liste des professeurs qui utiliseront l'appli, au format JSON — par exemple pour toi seul :
-   ```
-   VITE_PROFS=[{"nom":"C. Guilhem","pin":"2025"}]
-   ```
-   Ou, si tu la partages avec des collègues, un élément par professeur, chacun avec son propre code :
-   ```
-   VITE_PROFS=[{"nom":"C. Guilhem","pin":"2025"},{"nom":"Collègue Untel","pin":"1234"}]
-   ```
-   Chaque professeur ne verra et ne pourra réinitialiser que ses propres classes dans le Mode professeur — jamais celles d'un collègue.
+3. `VITE_PROFS` n'est plus utilisée depuis la mise à jour "Accès" : la liste des professeurs (administrateur + collègues) se gère désormais directement dans l'appli, depuis Mode professeur > onglet **Accès** (visible uniquement pour l'administrateur). Code d'accès par défaut à la première connexion : `2025`. Tu peux supprimer cette variable de `.env.local`/Vercel, elle est ignorée si elle est encore présente.
 
 ## 4. Règles de sécurité Firestore
 
