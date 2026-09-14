@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Home, Dumbbell, ListChecks, ClipboardList, History, Timer as TimerIcon,
   Plus, Trash2, Play, Pause, RotateCcw, ChevronRight, Flame, Target, Info, Calculator,
-  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil, Upload
+  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil, Upload, ArrowRightLeft
 } from "lucide-react";
 import {
   slug, loadProfil, saveProfilStorage, clearProfilStorage, loadMapping, saveMapping,
@@ -10,7 +10,7 @@ import {
   loadStudentHistoriqueByNumero, loadSeances, saveSeances, loadStudentSeancesByNumero,
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
   loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
-  modifierEleveMapping, supprimerEleveMapping,
+  modifierEleveMapping, supprimerEleveMapping, deplacerEleveMapping,
 } from "./storage.js";
 import ImportEleves from "./ImportEleves.jsx";
 
@@ -246,10 +246,18 @@ function IdentificationEleveNouveau({ profs, onValidateEleve, onModeProf }) {
     } else {
       if (pin !== pinConfirm) { setErreur("Les deux codes ne correspondent pas."); setPinConfirm(""); return; }
       const classeSaisie = classeManuelle.trim().toUpperCase();
-      const next = await appliquerImportClasse(prof, classeSaisie, [{ nom: nomManuel.trim(), prenom: prenomManuel.trim() }], "ajouter");
-      const cree = next.find((m) => slug(m.nom) === slug(nomManuel) && slug(m.prenom) === slug(prenomManuel));
-      await definirPinEleve(prof, classeSaisie, cree.numero, pin);
-      onValidateEleve({ type: "eleve", nom: nomManuel.trim(), prenom: prenomManuel.trim(), classe: classeSaisie, prof, numero: cree.numero });
+      const { mapping: next, conflits } = await appliquerImportClasse(prof, classeSaisie, [{ nom: nomManuel.trim(), prenom: prenomManuel.trim() }], "ajouter");
+      let cree = next.find((m) => slug(m.nom) === slug(nomManuel) && slug(m.prenom) === slug(prenomManuel));
+      let classeFinale = classeSaisie;
+      if (!cree && conflits.length > 0) {
+        // Déjà connu sous une autre classe (ex. reconnexion sur un nouvel appareil avec une
+        // classe tapée différemment) : on se connecte à sa fiche existante plutôt que d'échouer.
+        classeFinale = conflits[0].classeExistante;
+        const mappingAilleurs = await loadMapping(prof, classeFinale);
+        cree = mappingAilleurs.find((m) => slug(m.nom) === slug(nomManuel) && slug(m.prenom) === slug(prenomManuel));
+      }
+      await definirPinEleve(prof, classeFinale, cree.numero, pin);
+      onValidateEleve({ type: "eleve", nom: nomManuel.trim(), prenom: prenomManuel.trim(), classe: classeFinale, prof, numero: cree.numero });
     }
   }
 
@@ -1586,6 +1594,8 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [editPrenom, setEditPrenom] = useState("");
   const [editNom, setEditNom] = useState("");
   const [confirmRetraitEleve, setConfirmRetraitEleve] = useState(null); // numero à retirer, ou null
+  const [eleveEnDeplacement, setEleveEnDeplacement] = useState(null); // numero en cours de déplacement, ou null
+  const [classeCibleDeplacement, setClasseCibleDeplacement] = useState("");
 
   useEffect(() => {
     if (profNom) {
@@ -1628,12 +1638,15 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const ajouterEleve = async (e) => {
     e.preventDefault();
     if (!nouvelElevePrenom.trim() || !nouvelEleveNom.trim()) return;
-    const next = await appliquerImportClasse(
+    const { mapping: next, conflits } = await appliquerImportClasse(
       profConnecte.nom,
       classeChoisie,
       [{ nom: nouvelEleveNom.trim(), prenom: nouvelElevePrenom.trim(), sexe: nouvelEleveSexe || null }],
       "ajouter"
     );
+    if (conflits.length > 0) {
+      alert(`${conflits[0].prenom} ${conflits[0].nom} existe déjà dans la classe ${conflits[0].classeExistante} — pas ajouté ici pour éviter un doublon. Utilise "Déplacer vers une autre classe" sur sa fiche si tu veux le rattacher ici.`);
+    }
     setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
     setNouvelElevePrenom(""); setNouvelEleveNom(""); setNouvelEleveSexe("");
     setAjoutEleveOuvert(false);
@@ -1657,6 +1670,18 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
     setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
     setConfirmRetraitEleve(null);
     if (eleveOuvert === numero) setEleveOuvert(null);
+  };
+
+  const deplacerEleve = async (numero) => {
+    if (!classeCibleDeplacement.trim()) return;
+    await deplacerEleveMapping(profConnecte.nom, classeChoisie, numero, classeCibleDeplacement);
+    const next = await loadMapping(profConnecte.nom, classeChoisie);
+    setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+    setEleveEnDeplacement(null);
+    setClasseCibleDeplacement("");
+    setEleveOuvert(null);
+    const c = await loadClassesIndex(profConnecte.nom);
+    setClasses(c);
   };
 
   const ouvrirEleve = async (numero) => {
@@ -1846,9 +1871,40 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                         <button onClick={() => ouvrirEdition(eleve)} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200 rounded-lg py-1.5">
                           <Pencil size={11} /> Modifier
                         </button>
+                        <button onClick={() => { setEleveEnDeplacement(eleveEnDeplacement === eleve.numero ? null : eleve.numero); setClasseCibleDeplacement(""); }} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200 rounded-lg py-1.5">
+                          <ArrowRightLeft size={11} /> Déplacer
+                        </button>
                         <button onClick={() => setConfirmRetraitEleve(eleve.numero)} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-rose-600 bg-white border border-rose-200 rounded-lg py-1.5">
                           <Trash2 size={11} /> Retirer de la classe
                         </button>
+                      </div>
+                    )}
+
+                    {eleveEnDeplacement === eleve.numero && (
+                      <div className="bg-neutral-100 rounded-xl p-3 space-y-2">
+                        <p className="text-xs text-neutral-600">
+                          Actuellement dans <span className="font-bold">{classeChoisie}</span>. Son PIN, ses tests et
+                          ses séances le suivent, où qu'il aille.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            list="classes-disponibles-deplacement"
+                            value={classeCibleDeplacement}
+                            onChange={(e) => setClasseCibleDeplacement(e.target.value)}
+                            placeholder="Classe de destination"
+                            className="flex-1 bg-white border border-neutral-200 rounded-lg px-3 py-1.5 text-sm text-neutral-900"
+                          />
+                          <datalist id="classes-disponibles-deplacement">
+                            {(classes || []).filter((c) => c !== classeChoisie).map((c) => <option key={c} value={c} />)}
+                          </datalist>
+                          <button
+                            onClick={() => deplacerEleve(eleve.numero)}
+                            disabled={!classeCibleDeplacement.trim()}
+                            className="rounded-lg px-3 py-1.5 text-[11px] font-bold text-neutral-50 bg-orange-500 disabled:opacity-50"
+                          >
+                            Déplacer
+                          </button>
+                        </div>
                       </div>
                     )}
 

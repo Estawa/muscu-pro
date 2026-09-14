@@ -127,8 +127,17 @@ export default function ImportEleves({ prof, onImporte, onFermer }) {
       if (!parClasse[e.classe]) parClasse[e.classe] = [];
       parClasse[e.classe].push(e);
     });
+    const conflits = [];
     for (const [classe, liste] of Object.entries(parClasse)) {
-      await appliquerImportClasse(prof, classe, liste, mode);
+      const res = await appliquerImportClasse(prof, classe, liste, mode);
+      conflits.push(...(res.conflits || []));
+    }
+    if (conflits.length > 0) {
+      alert(
+        `${conflits.length} élève(s) déjà connu(s) sous une autre classe n'ont pas été déplacés automatiquement (pour éviter tout doublon) :\n\n` +
+        conflits.map((c) => `${c.prenom} ${c.nom} : resté dans ${c.classeExistante} (ce fichier l'indiquait dans ${c.classeFichier})`).join('\n') +
+        `\n\nVérifie dans la fiche de l'élève s'il faut le déplacer manuellement.`
+      );
     }
     onImporte();
   }

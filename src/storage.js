@@ -129,16 +129,52 @@ export function genNumero(existants) {
   return n;
 }
 
+// Cherche un élève par nom+prénom dans TOUTES les classes connues d'un prof (sauf, si précisée,
+// celle en cours de traitement) — sert à ne jamais créer de doublon quand le même élève est
+// repéré sous un nom de classe différent d'un import à l'autre (ex. classe d'origine vs groupe
+// classe). Renvoie { classe, numero, eleve } ou null. Coûte un aller-retour Firestore par classe
+// du prof (hors celle ignorée), acceptable pour une opération ponctuelle d'import.
+export async function trouverEleveParNomPartout(prof, nom, prenom, classeAIgnorer = null) {
+  const classes = await loadClassesIndex(prof);
+  for (const classe of classes) {
+    if (classe === classeAIgnorer) continue;
+    const mapping = await loadMapping(prof, classe);
+    const trouve = mapping.find((m) => slug(m.nom) === slug(nom) && slug(m.prenom) === slug(prenom));
+    if (trouve) return { classe, numero: trouve.numero, eleve: trouve };
+  }
+  return null;
+}
+
+// Déplace un élève d'une classe vers une autre en conservant son numéro (donc son PIN, ses
+// séances et son projet, indexés par numéro, pas par classe) — seul moyen sûr de corriger un
+// élève placé au mauvais endroit ; le supprimer puis le recréer casserait le lien avec son suivi.
+export async function deplacerEleveMapping(prof, classeActuelle, numero, nouvelleClasse) {
+  const mappingActuel = await loadMapping(prof, classeActuelle);
+  const eleve = mappingActuel.find((m) => m.numero === numero);
+  if (!eleve) return;
+  await saveMapping(prof, classeActuelle, mappingActuel.filter((m) => m.numero !== numero));
+  const nom = nouvelleClasse.trim().toUpperCase();
+  const mappingCible = await loadMapping(prof, nom);
+  await saveMapping(prof, nom, [...mappingCible, eleve]);
+  await addClasseToIndex(prof, nom);
+}
+
 // ---------- Import de liste de classe (Firestore, par prof + classe) ----------
 //
 // listeEleves : [{ nom, prenom, sexe? }] déjà filtrés sur UNE classe donnée.
-// mode "ajouter" : met à jour les élèves déjà présents (par nom/prénom, en gardant leur
-// numéro et leur PIN) et ajoute les nouveaux avec un numéro généré et un PIN vide.
-// mode "remplacer" : la classe ne contient plus que les élèves du fichier (les élèves
-// reconnus gardent leur numéro/PIN, les autres sont retirés).
+// mode "ajouter" : met à jour les élèves déjà présents (recherchés par nom/prénom dans TOUTES
+// les classes du prof, pas seulement celle du fichier — pour ne jamais dupliquer un élève déjà
+// placé dans un groupe classe alors que le fichier l'indique sous sa classe d'origine) et ajoute
+// les nouveaux avec un numéro généré et un PIN vide. mode "remplacer" : la classe ne contient
+// plus que les élèves du fichier (les élèves reconnus gardent leur numéro/PIN, les autres sont
+// retirés) — recherche limitée à cette classe, comme avant.
+// Renvoie { mapping, conflits } : conflits liste les élèves retrouvés sous une classe différente
+// de celle du fichier (laissés où ils sont, jamais déplacés automatiquement — utiliser
+// deplacerEleveMapping pour les corriger manuellement si besoin).
 export async function appliquerImportClasse(prof, classe, listeEleves, mode = "ajouter") {
   const mapping = await loadMapping(prof, classe);
   let next;
+  const conflits = [];
   if (mode === "remplacer") {
     next = listeEleves.map((imp) => {
       const trouve = mapping.find(
@@ -149,18 +185,23 @@ export async function appliquerImportClasse(prof, classe, listeEleves, mode = "a
     });
   } else {
     next = mapping.slice();
-    listeEleves.forEach((imp) => {
+    for (const imp of listeEleves) {
       const idx = next.findIndex((m) => slug(m.nom) === slug(imp.nom) && slug(m.prenom) === slug(imp.prenom));
       if (idx !== -1) {
         if (imp.sexe && !next[idx].sexe) next[idx] = { ...next[idx], sexe: imp.sexe };
+        continue;
+      }
+      const ailleurs = await trouverEleveParNomPartout(prof, imp.nom, imp.prenom, classe);
+      if (ailleurs) {
+        conflits.push({ nom: imp.nom, prenom: imp.prenom, classeExistante: ailleurs.classe, classeFichier: classe });
       } else {
         next.push({ numero: genNumero(next.map((m) => m.numero)), nom: imp.nom, prenom: imp.prenom, sexe: imp.sexe || null, pin: null });
       }
-    });
+    }
   }
   await saveMapping(prof, classe, next);
   await addClasseToIndex(prof, classe);
-  return next;
+  return { mapping: next, conflits };
 }
 
 // ---------- Code PIN personnel par élève (Firestore, dans le mapping) ----------
