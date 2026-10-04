@@ -1,0 +1,19 @@
+v1.6.0 — Groupes classe et Fin d'année
+
+Groupes classe (Mode professeur)
+- Nouveau bouton « Créer une classe ou un groupe classe » : un groupe réunit des élèves venus de plusieurs classes (ex. « Muscu 1ère G1 ») ; il est signalé par une étiquette « Groupe » dans la liste
+- Dans une classe ou un groupe, « Depuis mes classes » : choix des élèves dans tes autres classes (onglets par classe, cases à cocher, « Tout cocher ») ; ils rejoignent le groupe avec leur PIN, leurs tests, leurs séances et leur projet
+- Chaque élève ajouté garde la mémoire de sa classe d'origine (« vient de 1G3 ») : bouton « Renvoyer en 1G3 » sur sa fiche, « Renvoyer tous les élèves dans leur classe d'origine » et « Dissoudre ce groupe » (renvoie tout le monde puis supprime le groupe, sans rien effacer)
+- Les élèves se connectent en choisissant le groupe dans la liste des classes ; un élève déjà connecté sur son téléphone est recalé automatiquement sur sa nouvelle classe au lancement suivant
+
+Correctifs
+- « Déplacer » emporte désormais vraiment les tests, séances et projet de l'élève (avant, ils restaient rattachés à l'ancienne classe et devenaient invisibles)
+- « Retirer de la classe » efface aussi les données de l'élève, qui restaient stockées sans être consultables
+
+Fin d'année (onglet Accès, administrateur) — même modèle que Course de Durée Pro
+- Liste de toutes les classes et groupes, dans ton espace et celui de chaque collègue, avec le nombre d'élèves, de tests et de séances
+- Tout est coché sauf la classe PROF ; décoche ce que tu veux garder, tape EFFACER puis « Effacer définitivement »
+- Efface élèves + PIN, tests, séances et projets des classes cochées ; les accès des collègues sont conservés
+- Un élève dont la classe a été effacée doit se réidentifier à l'ouverture de l'appli
+
+Aucune modification des règles Firestore n'est nécessaire.
