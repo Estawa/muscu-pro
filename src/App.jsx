@@ -90,6 +90,11 @@ const colorMap = {
   lime: { bg: "bg-lime-500", bgSoft: "bg-lime-500/10", text: "text-lime-700", border: "border-lime-500/40", ring: "ring-lime-500" },
 };
 
+// R1 (force maximale) n'est pas proposé dans le projet de l'élève.
+const MOBILES_PROJET = MOBILES.filter((m) => m.id !== "r1");
+// Ateliers sans charge à soulever (rameur, vélo/elliptique, corde à sauter…) :
+// exclus des tests de charge de l'onglet Suivi.
+const atelierSansCharge = (nom, liste) => atelierZone(nom, liste) === "cardio";
 const mobileById = (id) => MOBILES.find((m) => m.id === id);
 const zoneById = (id) => ZONES.find((z) => z.id === id);
 // `liste` permet de résoudre la zone d'un atelier personnalisé (ajouté par
@@ -803,8 +808,8 @@ function Projet({ project, setProject, ateliersTous }) {
                   <p className={`text-sm font-bold ${zc.text}`}>{z.label}</p>
                 </div>
                 {z.hasMobile ? (
-                  <div className="grid grid-cols-5 gap-1">
-                    {MOBILES.map((m) => {
+                  <div className="grid grid-cols-4 gap-1">
+                    {MOBILES_PROJET.map((m) => {
                       const c = colorMap[m.color];
                       const active = project.mobiles[z.id] === m.id;
                       return (
@@ -820,7 +825,7 @@ function Projet({ project, setProject, ateliersTous }) {
                   </div>
                 ) : (
                   <p className="text-[11px] text-neutral-500 italic bg-white border border-neutral-200 rounded-lg px-3 py-2">
-                    Pas de mobile R1-R25 ici : le travail cardio se pilote en durée / intensité, pas en régime de répétitions.
+                    Pas de mobile R6-R25 ici : le travail cardio se pilote en durée / intensité, pas en régime de répétitions.
                   </p>
                 )}
               </div>
@@ -1331,7 +1336,8 @@ function EssaiForm({ atelier, zone, mobileZoneId, onValider, onAnnuler }) {
 
 function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) {
   const [atelierOuvert, setAtelierOuvert] = useState(null);
-  const ateliersProjet = project.ateliers.length > 0 ? project.ateliers : [];
+  const ateliersProjet = project.ateliers.filter((a) => !atelierSansCharge(a, ateliersTous));
+  const nbSansCharge = project.ateliers.length - ateliersProjet.length;
   const entriesFor = (atelier) => historique.filter((h) => h.atelier === atelier);
 
   return (
@@ -1345,8 +1351,16 @@ function Suivi({ project, profil, historique, onNouvelleEntree, ateliersTous }) 
         </div>
       </Card>
 
-      {ateliersProjet.length === 0 && (
+      {project.ateliers.length === 0 && (
         <Card><p className="text-sm text-neutral-500">Ajoute d'abord des ateliers dans l'onglet Projet.</p></Card>
+      )}
+
+      {nbSansCharge > 0 && (
+        <Card className="bg-white/60">
+          <p className="text-[11px] text-neutral-500 italic">
+            Les ateliers cardio de ton projet (rameur, vélo / elliptique, corde à sauter…) ne sont pas testés ici : il n'y a pas de charge à soulever.
+          </p>
+        </Card>
       )}
 
       {ateliersProjet.map((atelier) => {
@@ -2397,7 +2411,13 @@ export default function MuscuPro() {
       const s = await loadSeances(profil);
       setSeancesHistorique(s);
       const proj = await loadProjet(profil);
-      setProject(proj || PROJET_VIDE);
+      if (proj?.mobiles) {
+        // Ancien choix R1 (plus proposé) : on le retire.
+        const mobiles = Object.fromEntries(Object.entries(proj.mobiles).map(([k, v]) => [k, v === "r1" ? null : v]));
+        setProject({ ...proj, mobiles });
+      } else {
+        setProject(proj || PROJET_VIDE);
+      }
       setProjetCharge(true);
     })();
   }, [profil]);
