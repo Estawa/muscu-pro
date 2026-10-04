@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Home, Dumbbell, ListChecks, ClipboardList, History, Timer as TimerIcon,
   Plus, Trash2, Play, Pause, RotateCcw, ChevronRight, Flame, Target, Info, Calculator,
-  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil, Upload, ArrowRightLeft
+  User, TrendingUp, Check, Share2, Copy, LogOut, Lock, Pencil, Upload, ArrowRightLeft,
+  Users, UserPlus, Undo2, FolderPlus
 } from "lucide-react";
 import {
   slug, loadProfil, saveProfilStorage, clearProfilStorage, loadMapping, saveMapping,
@@ -11,8 +12,11 @@ import {
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
   loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
   modifierEleveMapping, supprimerEleveMapping, deplacerEleveMapping,
+  loadGroupes, creerClasse, resynchroniserProfil,
 } from "./storage.js";
 import ImportEleves from "./ImportEleves.jsx";
+import AjoutDepuisClasses from "./AjoutDepuisClasses.jsx";
+import FinAnnee from "./FinAnnee.jsx";
 
 // ---------------------------------------------------------------------------
 // Données de référence (issues de la programmation)
@@ -1596,16 +1600,25 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [confirmRetraitEleve, setConfirmRetraitEleve] = useState(null); // numero à retirer, ou null
   const [eleveEnDeplacement, setEleveEnDeplacement] = useState(null); // numero en cours de déplacement, ou null
   const [classeCibleDeplacement, setClasseCibleDeplacement] = useState("");
+  const [groupes, setGroupes] = useState([]);
+  const [creationOuverte, setCreationOuverte] = useState(false);
+  const [nomNouvelleClasse, setNomNouvelleClasse] = useState("");
+  const [typeNouvelleClasse, setTypeNouvelleClasse] = useState("groupe"); // "groupe" | "classe"
+  const [erreurCreation, setErreurCreation] = useState("");
+  const [ajoutDepuisOuvert, setAjoutDepuisOuvert] = useState(false);
+  const [operationEnCours, setOperationEnCours] = useState(false);
+  const [confirmDissoudre, setConfirmDissoudre] = useState(false);
+  const [messageGroupe, setMessageGroupe] = useState("");
 
   useEffect(() => {
     if (profNom) {
-      (async () => { const c = await loadClassesIndex(profNom); setClasses(c); })();
+      (async () => { const c = await loadClassesIndex(profNom); setClasses(c); setGroupes(await loadGroupes(profNom)); })();
     }
   }, [profNom]);
 
   const valider = async () => {
     const p = profs.find((x) => x.pin === pin);
-    if (p) { setProfConnecte(p); setErreur(false); const c = await loadClassesIndex(p.nom); setClasses(c); }
+    if (p) { setProfConnecte(p); setErreur(false); const c = await loadClassesIndex(p.nom); setClasses(c); setGroupes(await loadGroupes(p.nom)); }
     else setErreur(true);
   };
 
@@ -1613,11 +1626,78 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
     setRafraichissement(true);
     const c = await loadClassesIndex(profConnecte.nom);
     setClasses(c);
+    setGroupes(await loadGroupes(profConnecte.nom));
     setRafraichissement(false);
+  };
+
+  const creerNouvelleClasse = async (e) => {
+    e.preventDefault();
+    setErreurCreation("");
+    const estGroupe = typeNouvelleClasse === "groupe";
+    const nom = estGroupe ? nomNouvelleClasse.trim() : nomNouvelleClasse.trim().toUpperCase();
+    try {
+      const r = await creerClasse(profConnecte.nom, nom, estGroupe);
+      if (!r.ok) { setErreurCreation(r.erreur); return; }
+      setClasses(await loadClassesIndex(profConnecte.nom));
+      setGroupes(await loadGroupes(profConnecte.nom));
+      setNomNouvelleClasse("");
+      setCreationOuverte(false);
+      await choisirClasse(r.nom);
+      if (estGroupe) setAjoutDepuisOuvert(true);
+    } catch (err) {
+      setErreurCreation("Création impossible (connexion ?). Réessaie.");
+    }
+  };
+
+  // Renvoie dans leur classe d'origine les élèves donnés (tous ceux du groupe qui en ont une si
+  // aucune liste n'est précisée), avec toutes leurs données.
+  const renvoyerOrigine = async (eleves) => {
+    setOperationEnCours(true);
+    setMessageGroupe("");
+    let nbOk = 0;
+    const echecs = [];
+    for (const el of eleves) {
+      try {
+        await deplacerEleveMapping(profConnecte.nom, classeChoisie, el.numero, el.classeOrigine);
+        nbOk++;
+      } catch (err) { echecs.push(`${el.prenom} ${el.nom}`); }
+    }
+    const next = await loadMapping(profConnecte.nom, classeChoisie);
+    setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+    setDataEleves({});
+    setEleveOuvert(null);
+    setClasses(await loadClassesIndex(profConnecte.nom));
+    setOperationEnCours(false);
+    if (echecs.length) setMessageGroupe(`Échec pour : ${echecs.join(", ")} (connexion ?). Réessaie.`);
+    else if (eleves.length > 1) setMessageGroupe(`${nbOk} élève(s) renvoyé(s) dans leur classe d'origine.`);
+    return { next, echecs };
+  };
+
+  // Dissoudre un groupe : renvoie tous les élèves qui ont une classe d'origine, puis supprime le
+  // groupe s'il est vide. Les élèves ajoutés directement dans le groupe (sans origine) bloquent la
+  // suppression : à déplacer ou retirer à la main.
+  const dissoudreGroupe = async () => {
+    const avecOrigine = mapping.filter((m) => m.classeOrigine);
+    const { next, echecs } = await renvoyerOrigine(avecOrigine);
+    setConfirmDissoudre(false);
+    if (echecs.length) return;
+    if (next.length > 0) {
+      setMessageGroupe(`${avecOrigine.length} élève(s) renvoyé(s). Il reste ${next.length} élève(s) sans classe d'origine connue : déplace-les ou retire-les, puis relance « Dissoudre ».`);
+      return;
+    }
+    await resetClasse(profConnecte.nom, classeChoisie);
+    setClasses(await loadClassesIndex(profConnecte.nom));
+    setGroupes(await loadGroupes(profConnecte.nom));
+    setClasseChoisie(null);
+    setMapping([]);
+    setMessageGroupe("");
   };
 
   const choisirClasse = async (classe) => {
     setClasseChoisie(classe);
+    setAjoutDepuisOuvert(false);
+    setConfirmDissoudre(false);
+    setMessageGroupe("");
     setChargement(true);
     const m = await loadMapping(profConnecte.nom, classe);
     setMapping(m.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
@@ -1674,7 +1754,12 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
 
   const deplacerEleve = async (numero) => {
     if (!classeCibleDeplacement.trim()) return;
-    await deplacerEleveMapping(profConnecte.nom, classeChoisie, numero, classeCibleDeplacement);
+    try {
+      await deplacerEleveMapping(profConnecte.nom, classeChoisie, numero, classeCibleDeplacement);
+    } catch (err) {
+      alert("Déplacement impossible (connexion ?). Rien n'a été modifié, réessaie.");
+      return;
+    }
     const next = await loadMapping(profConnecte.nom, classeChoisie);
     setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
     setEleveEnDeplacement(null);
@@ -1769,14 +1854,45 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
           <button onClick={() => setImportOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5 text-xs font-bold text-orange-700">
             <Upload size={13} /> Importer une liste d'élèves
           </button>
+          <button onClick={() => { setCreationOuverte((v) => !v); setErreurCreation(""); }} className="w-full flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5 text-xs font-bold text-orange-700">
+            <FolderPlus size={13} /> Créer une classe ou un groupe classe
+          </button>
+          {creationOuverte && (
+            <Card>
+              <form onSubmit={creerNouvelleClasse} className="space-y-2.5">
+                <div className="flex gap-1.5">
+                  {[{ id: "groupe", label: "Groupe classe" }, { id: "classe", label: "Classe" }].map((t) => (
+                    <button type="button" key={t.id} onClick={() => setTypeNouvelleClasse(t.id)}
+                      className={`flex-1 text-xs font-bold py-2 rounded-xl border ${typeNouvelleClasse === t.id ? "bg-orange-500 text-neutral-50 border-orange-500" : "border-neutral-200 text-neutral-600"}`}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-neutral-500 leading-relaxed">
+                  {typeNouvelleClasse === "groupe"
+                    ? "Un groupe réunit des élèves venant de plusieurs classes (ex. « Muscu 1ère G1 »). Tu pourras ensuite y ajouter des élèves de tes autres classes, puis les y renvoyer en fin de cycle."
+                    : "Une classe vide, à remplir élève par élève ou par import."}
+                </p>
+                <input value={nomNouvelleClasse} onChange={(e) => { setNomNouvelleClasse(e.target.value); setErreurCreation(""); }}
+                  placeholder={typeNouvelleClasse === "groupe" ? "Nom du groupe" : "Nom de la classe (ex. 1G3)"} autoFocus
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-900" />
+                {erreurCreation && <p className="text-xs text-rose-600">{erreurCreation}</p>}
+                <button type="submit" disabled={!nomNouvelleClasse.trim()} className="w-full bg-orange-500 disabled:opacity-40 text-neutral-50 font-bold rounded-xl py-2 text-sm">Créer</button>
+              </form>
+            </Card>
+          )}
           <button onClick={rafraichirClasses} disabled={rafraichissement} className="w-full flex items-center justify-center gap-2 bg-white border border-neutral-200 rounded-xl py-2.5 text-xs font-bold text-neutral-600">
             <RotateCcw size={13} className={rafraichissement ? "animate-spin" : ""} /> {rafraichissement ? "Actualisation…" : "Actualiser les classes"}
           </button>
           {classes && classes.length === 0 && <Card><p className="text-sm text-neutral-500">Aucune classe enregistrée pour l'instant.</p></Card>}
           {classes && classes.map((c) => (
             <button key={c} onClick={() => choisirClasse(c)} className="w-full flex items-center justify-between bg-white border border-neutral-200 rounded-2xl px-4 py-3.5">
-              <span className="text-sm font-bold text-neutral-900">{c}</span>
-              <ChevronRight size={16} className="text-neutral-400" />
+              <span className="flex items-center gap-2 min-w-0">
+                {groupes.includes(c) && <Users size={14} className="text-orange-600 shrink-0" />}
+                <span className="text-sm font-bold text-neutral-900 truncate">{c}</span>
+                {groupes.includes(c) && <span className="text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-500/10 rounded-full px-2 py-0.5 shrink-0">Groupe</span>}
+              </span>
+              <ChevronRight size={16} className="text-neutral-400 shrink-0" />
             </button>
           ))}
 
@@ -1810,9 +1926,35 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
             </button>
           </div>
 
-          <button onClick={() => setAjoutEleveOuvert((v) => !v)} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5">
-            <Plus size={13} /> Ajouter un élève
-          </button>
+          {groupes.includes(classeChoisie) && (
+            <p className="text-[11px] text-neutral-500 -mt-2 flex items-center gap-1"><Users size={11} /> Groupe classe</p>
+          )}
+          <div className="flex gap-2">
+            <button onClick={() => { setAjoutDepuisOuvert((v) => !v); setAjoutEleveOuvert(false); }} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5">
+              <UserPlus size={13} /> Depuis mes classes
+            </button>
+            <button onClick={() => { setAjoutEleveOuvert((v) => !v); setAjoutDepuisOuvert(false); }} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-neutral-700 bg-white border border-neutral-200 rounded-xl py-2.5">
+              <Plus size={13} /> Nouvel élève
+            </button>
+          </div>
+          {ajoutDepuisOuvert && (
+            <AjoutDepuisClasses
+              prof={profConnecte.nom}
+              classeCible={classeChoisie}
+              classes={classes}
+              groupes={groupes}
+              onFermer={() => setAjoutDepuisOuvert(false)}
+              onTermine={async (toutOk) => {
+                const next = await loadMapping(profConnecte.nom, classeChoisie);
+                setMapping(next.slice().sort((a, b) => a.nom.localeCompare(b.nom)));
+                setDataEleves({});
+                setEleveOuvert(null);
+                setClasses(await loadClassesIndex(profConnecte.nom));
+                if (toutOk) setAjoutDepuisOuvert(false);
+              }}
+            />
+          )}
+          {messageGroupe && <p className="text-xs text-neutral-700 bg-neutral-100 rounded-xl px-3 py-2">{messageGroupe}</p>}
           {ajoutEleveOuvert && (
             <Card>
               <form onSubmit={ajouterEleve} className="flex flex-col gap-2">
@@ -1846,7 +1988,10 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                     <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center">
                       <User size={14} className="text-neutral-600" />
                     </div>
-                    <p className="text-sm font-bold text-neutral-900">{eleve.prenom} {eleve.nom}</p>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-neutral-900">{eleve.prenom} {eleve.nom}</p>
+                      {eleve.classeOrigine && <p className="text-[10px] text-neutral-500">vient de {eleve.classeOrigine}</p>}
+                    </div>
                   </div>
                   <ChevronRight size={16} className={`text-neutral-400 transition ${isOuvert ? "rotate-90" : ""}`} />
                 </button>
@@ -1880,6 +2025,13 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                       </div>
                     )}
 
+                    {eleve.classeOrigine && editionEleve !== eleve.numero && (
+                      <button disabled={operationEnCours} onClick={() => renvoyerOrigine([eleve])}
+                        className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-lg py-1.5 disabled:opacity-50">
+                        <Undo2 size={11} /> {operationEnCours ? "…" : `Renvoyer en ${eleve.classeOrigine} (avec ses données)`}
+                      </button>
+                    )}
+
                     {eleveEnDeplacement === eleve.numero && (
                       <div className="bg-neutral-100 rounded-xl p-3 space-y-2">
                         <p className="text-xs text-neutral-600">
@@ -1910,7 +2062,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
 
                     {confirmRetraitEleve === eleve.numero && (
                       <div className="bg-rose-500/5 border border-rose-500/40 rounded-xl p-3">
-                        <p className="text-xs text-neutral-700">Retirer <span className="font-bold">{eleve.prenom} {eleve.nom}</span> de la classe {classeChoisie} ? Ses tests et séances déjà enregistrés ne seront plus consultables (l'élève n'apparaîtra plus dans la liste).</p>
+                        <p className="text-xs text-neutral-700">Retirer <span className="font-bold">{eleve.prenom} {eleve.nom}</span> de {classeChoisie} ? L'élève et toutes ses données (tests, séances, projet) sont définitivement effacés.{eleve.classeOrigine ? ` Pour simplement le rendre à sa classe, utilise plutôt « Renvoyer en ${eleve.classeOrigine} ».` : " Pour le changer de classe sans rien perdre, utilise plutôt « Déplacer »."}</p>
                         <div className="flex gap-2 mt-2.5">
                           <button onClick={() => setConfirmRetraitEleve(null)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
                           <button onClick={() => retirerEleve(eleve.numero)} className="flex-1 rounded-lg py-2 text-[11px] font-bold text-neutral-50 bg-rose-500">Confirmer</button>
@@ -1994,6 +2146,30 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
             );
           })}
 
+          {groupes.includes(classeChoisie) && !chargement && mapping.some((m) => m.classeOrigine) && !confirmDissoudre && (
+            <button disabled={operationEnCours} onClick={() => renvoyerOrigine(mapping.filter((m) => m.classeOrigine))}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-neutral-700 bg-white border border-neutral-200 rounded-xl py-2.5 disabled:opacity-50">
+              <Undo2 size={13} /> {operationEnCours ? "Renvoi en cours…" : "Renvoyer tous les élèves dans leur classe d'origine"}
+            </button>
+          )}
+          {groupes.includes(classeChoisie) && !chargement && !confirmDissoudre && (
+            <button onClick={() => setConfirmDissoudre(true)} className="w-full text-center text-xs font-semibold text-neutral-500 py-1">
+              Dissoudre ce groupe
+            </button>
+          )}
+          {confirmDissoudre && (
+            <Card className="border-orange-500/40 bg-orange-500/5">
+              <p className="text-sm font-bold text-neutral-900">Dissoudre {classeChoisie} ?</p>
+              <p className="text-xs text-neutral-600 mt-1">Chaque élève retourne dans sa classe d'origine avec toutes ses données, puis le groupe est supprimé. Aucune donnée élève n'est effacée.</p>
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => setConfirmDissoudre(false)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
+                <button disabled={operationEnCours} onClick={dissoudreGroupe} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-50 bg-orange-500">
+                  {operationEnCours ? "…" : "Dissoudre"}
+                </button>
+              </div>
+            </Card>
+          )}
+
           {!chargement && confirmReset !== "classe" && (
             <button onClick={() => setConfirmReset("classe")} className="w-full text-center text-xs font-semibold text-rose-600/70 py-2">
               Réinitialiser cette classe
@@ -2002,7 +2178,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
           {confirmReset === "classe" && (
             <Card className="border-rose-500/40 bg-rose-500/5">
               <p className="text-sm font-bold text-rose-600">Réinitialiser {classeChoisie} ?</p>
-              <p className="text-xs text-neutral-600 mt-1">Supprime définitivement les {mapping.length} élève(s) de cette classe et toutes leurs données (tests, séances). Impossible à annuler.</p>
+              <p className="text-xs text-neutral-600 mt-1">Supprime définitivement les {mapping.length} élève(s) de cette classe et toutes leurs données (tests, séances). Impossible à annuler.{groupes.includes(classeChoisie) ? " Pour rendre les élèves à leur classe sans rien effacer, utilise plutôt « Dissoudre ce groupe »." : ""}</p>
               <div className="flex gap-2 mt-3">
                 <button onClick={() => setConfirmReset(null)} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-600 bg-white border border-neutral-200">Annuler</button>
                 <button disabled={resetEnCours} onClick={confirmerReset} className="flex-1 rounded-xl py-2.5 text-xs font-bold text-neutral-50 bg-rose-500">
@@ -2163,7 +2339,19 @@ export default function MuscuPro() {
 
   useEffect(() => {
     (async () => {
-      const p = await loadProfil();
+      let p = await loadProfil();
+      // Élève déplacé par le prof (groupe classe, changement de classe) ou effacé en fin d'année :
+      // on recale le profil local sur sa classe actuelle AVANT d'ouvrir sa session (sinon la
+      // sauvegarde auto du projet partirait sous l'ancienne classe), ou on redemande
+      // l'identification. Délai max 5 s pour ne jamais bloquer l'ouverture hors ligne.
+      if (p && p.type === "eleve") {
+        const recale = await Promise.race([
+          resynchroniserProfil(p),
+          new Promise((r) => setTimeout(() => r(p), 5000)),
+        ]);
+        if (recale === null) { clearProfilStorage(); p = null; }
+        else p = recale;
+      }
       setProfil(p);
       setProfilLoaded(true);
       const perso = await loadAteliersPerso();
@@ -2349,6 +2537,7 @@ export default function MuscuPro() {
             {estAdmin && profTab === "acces" && (
               <div className="px-5">
                 <AccesTab acces={acces} onSauver={(next) => { setAcces(next); saveAcces(next); }} />
+                <FinAnnee acces={acces} />
               </div>
             )}
           </div>

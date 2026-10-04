@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, getDocs, collection } from "firebase/firestore";
 import { db } from "./firebase.js";
 
 // ---------------------------------------------------------------------------
@@ -112,15 +112,56 @@ export async function addClasseToIndex(prof, classe) {
     const list = await loadClassesIndex(prof);
     if (!list.includes(classe)) {
       list.push(classe);
-      await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { list });
+      // merge : ne jamais écraser la liste des groupes stockée dans le même document
+      await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { list }, { merge: true });
     }
   } catch (e) {}
 }
 async function removeClasseFromIndex(prof, classe) {
   try {
-    const list = await loadClassesIndex(prof);
-    await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { list: list.filter((c) => c !== classe) });
+    const snap = await getDoc(doc(db, "meta", `classes-${slug(prof)}`));
+    const d = snap.exists() ? snap.data() : {};
+    await setDoc(doc(db, "meta", `classes-${slug(prof)}`), {
+      list: (d.list || []).filter((c) => c !== classe),
+      groupes: (d.groupes || []).filter((c) => c !== classe),
+    });
   } catch (e) {}
+}
+
+// ---------- Classes et groupes classe ----------
+//
+// Un "groupe classe" est une classe comme une autre (les élèves s'y connectent en le choisissant
+// dans la liste des classes, leurs données y sont rangées) ; il est seulement marqué comme groupe
+// dans meta/classes-{prof}.groupes, et chacun de ses élèves venu d'une autre classe garde la trace
+// de sa classe d'origine (champ classeOrigine dans le mapping) pour pouvoir y être renvoyé.
+
+export async function loadGroupes(prof) {
+  try {
+    const snap = await getDoc(doc(db, "meta", `classes-${slug(prof)}`));
+    return snap.exists() ? (snap.data().groupes || []) : [];
+  } catch (e) { return []; }
+}
+
+// Retrouve le nom exact d'une classe déjà connue (insensible à la casse/accents), sinon null.
+export async function resoudreNomClasse(prof, saisie) {
+  const list = await loadClassesIndex(prof);
+  return list.find((c) => slug(c) === slug(saisie)) || null;
+}
+
+// Crée une classe ou un groupe classe vide. Renvoie { ok, nom, erreur }.
+export async function creerClasse(prof, nomSaisi, estGroupe) {
+  const nom = (nomSaisi || "").trim().replace(/\s+/g, " ");
+  if (!nom) return { ok: false, erreur: "Donne un nom." };
+  const existante = await resoudreNomClasse(prof, nom);
+  if (existante) return { ok: false, erreur: `« ${existante} » existe déjà.` };
+  const ref = doc(db, "meta", `classes-${slug(prof)}`);
+  const snap = await getDoc(ref);
+  const d = snap.exists() ? snap.data() : {};
+  const list = [...(d.list || []), nom];
+  const groupes = estGroupe ? [...(d.groupes || []), nom] : (d.groupes || []);
+  await setDoc(ref, { list, groupes });
+  await setDoc(doc(db, "mapping", classeDocId(prof, nom)), { students: [] });
+  return { ok: true, nom };
 }
 
 export function genNumero(existants) {
@@ -145,18 +186,82 @@ export async function trouverEleveParNomPartout(prof, nom, prenom, classeAIgnore
   return null;
 }
 
-// Déplace un élève d'une classe vers une autre en conservant son numéro (donc son PIN, ses
-// séances et son projet, indexés par numéro, pas par classe) — seul moyen sûr de corriger un
-// élève placé au mauvais endroit ; le supprimer puis le recréer casserait le lien avec son suivi.
-export async function deplacerEleveMapping(prof, classeActuelle, numero, nouvelleClasse) {
+// Déplace un élève d'une classe vers une autre AVEC toutes ses données (tests, séances, projet,
+// PIN). Les documents Firestore étant indexés par prof+classe+numéro, ils sont recopiés sous la
+// nouvelle classe puis supprimés de l'ancienne — sans ça, l'élève arriverait "vide" dans sa
+// nouvelle classe. Si son numéro est déjà pris dans la classe d'arrivée, il en reçoit un nouveau
+// (son téléphone se recale tout seul au prochain lancement, voir resynchroniserProfil).
+// options.origine : "garder" (défaut : inchangée, effacée si on revient dans la classe d'origine),
+// "definir" (ajout à un groupe : mémorise la classe actuelle comme origine si aucune ne l'est déjà).
+// Renvoie le nom exact de la classe d'arrivée.
+const COLLECTIONS_ELEVE = ["historique", "seances", "projets"];
+
+export async function deplacerEleveMapping(prof, classeActuelle, numero, nouvelleClasse, options = {}) {
   const mappingActuel = await loadMapping(prof, classeActuelle);
   const eleve = mappingActuel.find((m) => m.numero === numero);
-  if (!eleve) return;
+  if (!eleve) return null;
+  const cible = (await resoudreNomClasse(prof, nouvelleClasse)) || nouvelleClasse.trim().toUpperCase();
+  if (cible === classeActuelle) return cible;
+  const mappingCible = await loadMapping(prof, cible);
+  const nouveauNumero = mappingCible.some((m) => m.numero === numero)
+    ? genNumero([...mappingCible.map((m) => m.numero), ...mappingActuel.map((m) => m.numero)])
+    : numero;
+
+  // 1) Recopie des données (lecture/écriture strictes : en cas d'échec, rien n'est encore retiré).
+  for (const col of COLLECTIONS_ELEVE) {
+    const snap = await getDoc(doc(db, col, studentDocId(prof, classeActuelle, numero)));
+    const dest = doc(db, col, studentDocId(prof, cible, nouveauNumero));
+    if (snap.exists()) await setDoc(dest, snap.data());
+    else await deleteDoc(dest); // pas d'héritage accidentel de données orphelines
+  }
+
+  // 2) Mise à jour des listes de classe.
+  let classeOrigine = eleve.classeOrigine || null;
+  if (options.origine === "definir" && !classeOrigine) classeOrigine = classeActuelle;
+  if (classeOrigine && slug(classeOrigine) === slug(cible)) classeOrigine = null;
+  const { classeOrigine: _ancienne, ...reste } = eleve;
+  const eleveDeplace = { ...reste, numero: nouveauNumero, ...(classeOrigine ? { classeOrigine } : {}) };
+  await saveMapping(prof, cible, [...mappingCible, eleveDeplace]);
   await saveMapping(prof, classeActuelle, mappingActuel.filter((m) => m.numero !== numero));
-  const nom = nouvelleClasse.trim().toUpperCase();
-  const mappingCible = await loadMapping(prof, nom);
-  await saveMapping(prof, nom, [...mappingCible, eleve]);
-  await addClasseToIndex(prof, nom);
+  await addClasseToIndex(prof, cible);
+
+  // 3) Nettoyage de l'ancien emplacement.
+  for (const col of COLLECTIONS_ELEVE) {
+    try { await deleteDoc(doc(db, col, studentDocId(prof, classeActuelle, numero))); } catch (e) {}
+  }
+  return cible;
+}
+
+// Côté élève, au lancement : si le prof l'a déplacé (groupe classe, changement de classe), son
+// profil local pointe encore vers l'ancienne classe. On le retrouve dans les listes du prof et on
+// recale classe + numéro. Lectures strictes : hors ligne ou en cas d'erreur, profil inchangé.
+// Renvoie null uniquement si la lecture a réussi et que l'élève n'existe plus nulle part (classe
+// effacée en fin d'année, élève retiré) : l'appli redemande alors l'identification.
+export async function resynchroniserProfil(profil) {
+  if (!profil || profil.type !== "eleve" || !profil.prof || !profil.numero) return profil;
+  try {
+    const lireMapping = async (c) => {
+      const snap = await getDoc(doc(db, "mapping", classeDocId(profil.prof, c)));
+      return snap.exists() ? (snap.data().students || []) : [];
+    };
+    const actuel = await lireMapping(profil.classe);
+    if (actuel.some((m) => m.numero === profil.numero)) return profil;
+    const memeNom = (m) => slug(m.nom) === slug(profil.nom) && slug(m.prenom) === slug(profil.prenom);
+    const idx = await getDoc(doc(db, "meta", `classes-${slug(profil.prof)}`));
+    const classes = idx.exists() ? (idx.data().list || []) : [];
+    let trouve = null;
+    for (const c of classes) {
+      const m = c === profil.classe ? actuel : await lireMapping(c);
+      const parNumero = m.find((e) => e.numero === profil.numero && memeNom(e));
+      if (parNumero) { trouve = { classe: c, eleve: parNumero }; break; }
+      const parNom = m.find(memeNom);
+      if (parNom && !trouve) trouve = { classe: c, eleve: parNom };
+    }
+    if (!trouve) return null;
+    const next = { ...profil, classe: trouve.classe, numero: trouve.eleve.numero };
+    await saveProfilStorage(next);
+    return next;
+  } catch (e) { return profil; }
 }
 
 // ---------- Import de liste de classe (Firestore, par prof + classe) ----------
@@ -228,10 +333,13 @@ export async function modifierEleveMapping(prof, classe, numero, { nom, prenom, 
   return next;
 }
 
+// Retire un élève de la classe ET efface ses données (tests, séances, projet) : une fois retiré
+// de la liste, elles n'étaient plus consultables par personne et restaient stockées pour rien.
 export async function supprimerEleveMapping(prof, classe, numero) {
   const mapping = await loadMapping(prof, classe);
   const next = mapping.filter((m) => m.numero !== numero);
   await saveMapping(prof, classe, next);
+  await resetEleve(prof, classe, numero);
   return next;
 }
 
@@ -340,5 +448,71 @@ export async function resetToutesLesDonnees(prof) {
   for (const classe of classes) {
     await resetClasse(prof, classe);
   }
-  try { await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { list: [] }); } catch (e) {}
+  try { await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { list: [], groupes: [] }); } catch (e) {}
+}
+
+// ---------- Fin d'année (admin) ----------
+//
+// Lecture de tous les documents élèves (3 collections) en une fois, puis répartition par
+// professeur et par classe. Les documents dont le numéro n'est plus dans la liste de la classe
+// (élèves retirés avant la v1.6.0) sont rattachés à leur classe et effacés avec elle.
+
+export async function listerDocsEleves() {
+  const res = {};
+  for (const col of COLLECTIONS_ELEVE) {
+    const snap = await getDocs(collection(db, col)); // lève une erreur si la lecture échoue
+    res[col] = snap.docs.map((d) => ({ id: d.id, nb: Array.isArray(d.data().entries) ? d.data().entries.length : 1 }));
+  }
+  return res;
+}
+
+function docsDeLaClasse(listing, prof, classe) {
+  const prefixe = `${classeDocId(prof, classe)}-`;
+  const garde = (d) => d.id.startsWith(prefixe) && /^\d+$/.test(d.id.slice(prefixe.length));
+  const out = {};
+  for (const col of COLLECTIONS_ELEVE) out[col] = (listing[col] || []).filter(garde);
+  return out;
+}
+
+// Résumé par classe de l'espace d'un professeur : élèves, tests, séances, projets.
+export async function analyserEspaceFinAnnee(prof, listing) {
+  const snap = await getDoc(doc(db, "meta", `classes-${slug(prof)}`));
+  const d = snap.exists() ? snap.data() : {};
+  const groupes = d.groupes || [];
+  const classes = d.list || [];
+  const lignes = [];
+  for (const classe of classes) {
+    const m = await getDoc(doc(db, "mapping", classeDocId(prof, classe)));
+    const docs = docsDeLaClasse(listing, prof, classe);
+    lignes.push({
+      nom: classe,
+      estGroupe: groupes.includes(classe),
+      nbEleves: m.exists() ? (m.data().students || []).length : 0,
+      nbTests: docs.historique.reduce((a, x) => a + x.nb, 0),
+      nbSeances: docs.seances.reduce((a, x) => a + x.nb, 0),
+      nbProjets: docs.projets.length,
+    });
+  }
+  return lignes.sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+}
+
+// Efface définitivement les classes choisies d'un professeur (liste + PIN, tests, séances, projets)
+// et les retire de son index. N'affecte ni les accès, ni les autres classes, ni les autres profs.
+export async function effacerClassesFinAnnee(prof, classes, listing) {
+  let nbEleves = 0, nbDocs = 0, nbEchecs = 0;
+  for (const classe of classes) {
+    const docs = docsDeLaClasse(listing, prof, classe);
+    try {
+      const m = await getDoc(doc(db, "mapping", classeDocId(prof, classe)));
+      if (m.exists()) nbEleves += (m.data().students || []).length;
+    } catch (e) {}
+    for (const col of COLLECTIONS_ELEVE) {
+      for (const x of docs[col]) {
+        try { await deleteDoc(doc(db, col, x.id)); nbDocs++; } catch (e) { nbEchecs++; }
+      }
+    }
+    try { await deleteDoc(doc(db, "mapping", classeDocId(prof, classe))); } catch (e) { nbEchecs++; }
+    await removeClasseFromIndex(prof, classe);
+  }
+  return { nbEleves, nbDocs, nbEchecs };
 }
