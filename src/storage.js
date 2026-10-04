@@ -18,6 +18,8 @@ import { db } from "./firebase.js";
 //   meta/classes-{profSlug}                  { list: [classe, ...] }
 //   historique/{profSlug-classeSlug-numero}  { entries: [...] }   (tests R15-R20)
 //   seances/{profSlug-classeSlug-numero}     { entries: [...] }   (séances)
+//   projets/{profSlug-classeSlug-numero}     { project }          (projet de l'élève)
+//   meta/notation-{profSlug-classeSlug}      réglages de notation de la classe (v1.7.0)
 // ---------------------------------------------------------------------------
 
 // Liste des professeurs autorisés à utiliser le Mode professeur (administrateur + collègues
@@ -415,6 +417,44 @@ export async function loadProjet(profil) {
 export async function saveProjet(profil, project) {
   try { await setDoc(doc(db, "projets", studentDocId(profil.prof, profil.classe, profil.numero)), { project }); } catch (e) {}
 }
+export async function loadStudentProjetByNumero(prof, classe, numero) {
+  try {
+    const snap = await getDoc(doc(db, "projets", studentDocId(prof, classe, numero)));
+    return snap.exists() ? snap.data().project : null;
+  } catch (e) { return null; }
+}
+
+// ---------- Réglages de notation d'une classe (Mode professeur) ----------
+//
+// Rangés dans la collection "meta" (déjà autorisée par les règles Firestore) :
+//   meta/notation-{profSlug}-{classeSlug}
+//   { seancesAttendues, ptsConnaissances, refHaut, refBas, connaissances, exclus, fige }
+
+export const NOTATION_DEFAUT = {
+  seancesAttendues: 7,
+  ptsConnaissances: 0,
+  refHaut: null,
+  refBas: null,
+  connaissances: {},
+  exclus: [],
+  fige: null,
+};
+function notationDocId(prof, classe) {
+  return `notation-${classeDocId(prof, classe)}`;
+}
+export async function loadNotation(prof, classe) {
+  try {
+    const snap = await getDoc(doc(db, "meta", notationDocId(prof, classe)));
+    return snap.exists() ? { ...NOTATION_DEFAUT, ...snap.data() } : { ...NOTATION_DEFAUT };
+  } catch (e) { return { ...NOTATION_DEFAUT }; }
+}
+// Écriture stricte : l'appelant affiche un message si l'enregistrement échoue.
+export async function saveNotation(prof, classe, reglages) {
+  await setDoc(doc(db, "meta", notationDocId(prof, classe)), reglages);
+}
+async function supprimerNotation(prof, classe) {
+  try { await deleteDoc(doc(db, "meta", notationDocId(prof, classe))); } catch (e) {}
+}
 
 // ---------- Réinitialisation (Mode professeur, scopée à SES classes) ----------
 
@@ -438,6 +478,7 @@ export async function resetClasse(prof, classe) {
     try { await deleteDoc(doc(db, "projets", studentDocId(prof, classe, eleve.numero))); } catch (e) {}
   }
   try { await deleteDoc(doc(db, "mapping", classeDocId(prof, classe))); } catch (e) {}
+  await supprimerNotation(prof, classe);
   await removeClasseFromIndex(prof, classe);
 }
 
@@ -512,6 +553,7 @@ export async function effacerClassesFinAnnee(prof, classes, listing) {
       }
     }
     try { await deleteDoc(doc(db, "mapping", classeDocId(prof, classe))); } catch (e) { nbEchecs++; }
+    await supprimerNotation(prof, classe);
     await removeClasseFromIndex(prof, classe);
   }
   return { nbEleves, nbDocs, nbEchecs };

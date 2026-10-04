@@ -12,8 +12,11 @@ import {
   loadProjet, saveProjet, resetEleve, resetClasse, resetToutesLesDonnees, loadAcces, saveAcces,
   loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
   modifierEleveMapping, supprimerEleveMapping, deplacerEleveMapping,
-  loadGroupes, creerClasse, resynchroniserProfil,
+  loadGroupes, creerClasse, resynchroniserProfil, loadStudentProjetByNumero, loadNotation,
 } from "./storage.js";
+import { PCT_MOBILE, repsToPercent, instantaneAtelier, analyserSeances, bilanCycle } from "./analyse.js";
+import { ListeSeancesAnalysees, BilanCycle } from "./Bilans.jsx";
+import NotationClasse from "./NotationClasse.jsx";
 import ImportEleves from "./ImportEleves.jsx";
 import AjoutDepuisClasses from "./AjoutDepuisClasses.jsx";
 import FinAnnee from "./FinAnnee.jsx";
@@ -916,7 +919,7 @@ function derniereMoyenne(seancesHistorique, atelier) {
   return null;
 }
 
-function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, ateliersTous }) {
+function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, ateliersTous, tests = [] }) {
   const [rows, setRows] = useState([{ atelier: project.ateliers[0] || "", series: [{ charge: "", reps: "" }], ressenti: "" }]);
   const [rpe, setRpe] = useState(5);
   const [duree, setDuree] = useState(90);
@@ -945,17 +948,22 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
   const enregistrer = () => {
     const ateliersData = rows.filter((row) => row.atelier && statsRow(row).nb > 0).map((row) => {
       const s = statsRow(row);
+      const zone = atelierZone(row.atelier, ateliersTous) || null;
       return {
         atelier: row.atelier,
-        zone: atelierZone(row.atelier, ateliersTous),
+        zone,
         nbSeries: s.nb,
         chargeMoyenne: Math.round(s.chargeMoy * 10) / 10,
         repsMoyenne: Math.round(s.repsMoy * 10) / 10,
         tonnage: Math.round(s.tonnage),
         ressenti: row.ressenti || null,
+        // v1.7.0 : détail des séries + ce que le projet prévoyait ce jour-là
+        series: row.series.filter((x) => x.charge && x.reps).map((x) => ({ charge: parseFloat(x.charge), reps: parseFloat(x.reps) })),
+        ...instantaneAtelier(row.atelier, zone, project, tests),
       };
     });
     const entry = {
+      ts: Date.now(),
       date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }),
       tonnage: Math.round(tonnageTotal),
       rpe, duree, charge: chargeSeance,
@@ -968,6 +976,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
   };
 
   const maxCharge = Math.max(...seancesHistorique.map((s) => s.charge), 1);
+  const analyses = analyserSeances(seancesHistorique, { project, tests });
 
   return (
     <div className="px-5 pb-6 space-y-4">
@@ -1126,27 +1135,12 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
               </div>
             ))}
           </div>
-          <div className="mt-4 space-y-2">
-            {seancesHistorique.slice().reverse().map((s, i) => (
-              <div key={i} className="border-t border-neutral-200 pt-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">{s.date}</span>
-                  <span className="text-neutral-500">{s.tonnage} kg</span>
-                  <span className="text-neutral-500">RPE {s.rpe}</span>
-                  <span className="font-bold text-orange-600">{s.charge} UA</span>
-                </div>
-                {s.ateliers && s.ateliers.length > 0 && (
-                  <div className="mt-1.5 space-y-1">
-                    {s.ateliers.map((a, ai) => (
-                      <div key={ai} className="flex items-center justify-between text-[10px] text-neutral-400">
-                        <span>{a.atelier}</span>
-                        <span>{a.nbSeries}× · {a.chargeMoyenne}kg (moy.) · {a.repsMoyenne} rép (moy.)</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="mt-4">
+            <p className="text-[10px] text-neutral-500 mb-2">
+              Pour chaque atelier : ce que tu as réalisé comparé à ce que ton projet prévoyait (mobile de la zone, charge cible issue de ton test, séries).
+              ✓ conforme · ≈ partiel · ✗ éloigné
+            </p>
+            <ListeSeancesAnalysees analyses={analyses} />
           </div>
         </Card>
       )}
@@ -1162,19 +1156,7 @@ function SeanceHistorique({ project, seancesHistorique, onNouvelleSeance, atelie
 // Écran : Convertisseur de charge (%charge max ↔ répétitions)
 // ---------------------------------------------------------------------------
 
-// % représentatif de chaque mobile, pour la conversion (milieu de fourchette d'intensité)
-const PCT_MOBILE = { r1: 0.95, r6: 0.80, r10: 0.70, r15: 0.55, r25: 0.40 };
-
-// Correspondance répétitions réalisées → % de charge max (tableau de conversion)
-function repsToPercent(reps) {
-  const table = [
-    { max: 1, pct: 100 }, { max: 2, pct: 95 }, { max: 3, pct: 90 }, { max: 5, pct: 85 },
-    { max: 6, pct: 80 }, { max: 8, pct: 75 }, { max: 10, pct: 70 }, { max: 12, pct: 65 },
-    { max: 15, pct: 60 }, { max: 20, pct: 55 }, { max: 25, pct: 50 }, { max: 28, pct: 40 },
-  ];
-  for (const t of table) if (reps <= t.max) return t.pct;
-  return 35;
-}
+// PCT_MOBILE et repsToPercent : voir analyse.js (partagés avec l'analyse des séances).
 
 function ResultatsConversion({ charge100, mobileActif, zoneAtelier }) {
   return (
@@ -1623,6 +1605,8 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [operationEnCours, setOperationEnCours] = useState(false);
   const [confirmDissoudre, setConfirmDissoudre] = useState(false);
   const [messageGroupe, setMessageGroupe] = useState("");
+  const [notesOuvert, setNotesOuvert] = useState(false);
+  const [reglagesClasse, setReglagesClasse] = useState(null); // réglages de notation de la classe ouverte
 
   useEffect(() => {
     if (profNom) {
@@ -1709,6 +1693,8 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
 
   const choisirClasse = async (classe) => {
     setClasseChoisie(classe);
+    setNotesOuvert(false);
+    setReglagesClasse(null);
     setAjoutDepuisOuvert(false);
     setConfirmDissoudre(false);
     setMessageGroupe("");
@@ -1787,9 +1773,13 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
     if (eleveOuvert === numero) { setEleveOuvert(null); return; }
     setEleveOuvert(numero);
     if (!dataEleves[numero]) {
-      const tests = await loadStudentHistoriqueByNumero(profConnecte.nom, classeChoisie, numero);
-      const seances = await loadStudentSeancesByNumero(profConnecte.nom, classeChoisie, numero);
-      setDataEleves((d) => ({ ...d, [numero]: { tests, seances } }));
+      const [tests, seances, projet] = await Promise.all([
+        loadStudentHistoriqueByNumero(profConnecte.nom, classeChoisie, numero),
+        loadStudentSeancesByNumero(profConnecte.nom, classeChoisie, numero),
+        loadStudentProjetByNumero(profConnecte.nom, classeChoisie, numero),
+      ]);
+      if (!reglagesClasse) setReglagesClasse(await loadNotation(profConnecte.nom, classeChoisie));
+      setDataEleves((d) => ({ ...d, [numero]: { tests, seances, projet } }));
     }
   };
 
@@ -1813,7 +1803,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const confirmerResetEleve = async (numero) => {
     setResetEnCours(true);
     await resetEleve(profConnecte.nom, classeChoisie, numero);
-    setDataEleves((d) => ({ ...d, [numero]: { tests: [], seances: [] } }));
+    setDataEleves((d) => ({ ...d, [numero]: { tests: [], seances: [], projet: null } }));
     setResetEnCours(false);
     setConfirmResetEleve(null);
   };
@@ -1942,6 +1932,17 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
 
           {groupes.includes(classeChoisie) && (
             <p className="text-[11px] text-neutral-500 -mt-2 flex items-center gap-1"><Users size={11} /> Groupe classe</p>
+          )}
+          <button onClick={() => setNotesOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500 text-neutral-50 rounded-xl py-2.5 text-xs font-bold">
+            <ListChecks size={14} /> Notes de cycle — tableau de classe
+          </button>
+          {notesOuvert && (
+            <NotationClasse
+              prof={profConnecte.nom}
+              classe={classeChoisie}
+              mapping={mapping}
+              onFermer={async () => { setNotesOuvert(false); setReglagesClasse(await loadNotation(profConnecte.nom, classeChoisie)); }}
+            />
           )}
           <div className="flex gap-2">
             <button onClick={() => { setAjoutDepuisOuvert((v) => !v); setAjoutEleveOuvert(false); }} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-xl py-2.5">
@@ -2108,35 +2109,31 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                       </div>
                     )}
 
-                    {data && (
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-neutral-500 mb-1.5">Séances d'entraînement</p>
-                        {data.seances.length === 0 && <p className="text-xs text-neutral-400">Aucune séance enregistrée.</p>}
-                        <div className="space-y-2">
-                          {data.seances.slice().reverse().map((s, i) => (
-                            <div key={i} className="bg-white rounded-lg px-3 py-2 text-xs">
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold text-neutral-800">{s.date}</span>
-                                <span className="text-neutral-500">{s.tonnage}kg · RPE {s.rpe} · {s.charge} UA</span>
-                              </div>
-                              {s.ateliers && s.ateliers.length > 0 && (
-                                <div className="mt-1.5 space-y-1">
-                                  {s.ateliers.map((a, ai) => (
-                                    <div key={ai} className="flex items-center justify-between text-[10px] text-neutral-500">
-                                      <span>{a.atelier}</span>
-                                      <span>
-                                        {a.nbSeries}× · {a.chargeMoyenne}kg (moy.) · {a.repsMoyenne} rép (moy.)
-                                        {a.ressenti && ` · ${RESSENTI.find((r) => r.id === a.ressenti)?.symbole || ""}`}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                    {data && (() => {
+                      const ctx = { project: data.projet || PROJET_VIDE, tests: data.tests };
+                      const attendues = reglagesClasse?.seancesAttendues || 7;
+                      const bilan = bilanCycle(data.seances, ctx, attendues);
+                      const mobilesProjet = Object.entries((data.projet || {}).mobiles || {}).filter(([, v]) => v && v !== "r1");
+                      return (
+                        <div className="space-y-3">
+                          <BilanCycle bilan={bilan} seancesAttendues={attendues} />
+                          <div>
+                            <p className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Projet de l'élève</p>
+                            {!data.projet || mobilesProjet.length === 0
+                              ? <p className="text-xs text-neutral-400">Aucun mobile choisi dans le projet.</p>
+                              : <p className="text-[10px] text-neutral-600">
+                                  {mobilesProjet.map(([z, m]) => `${zoneById(z)?.label || z} : ${mobileById(m)?.label}`).join(" · ")}
+                                  {(data.projet.ateliers || []).length > 0 && <span className="text-neutral-400"> — {(data.projet.ateliers || []).length} atelier(s)</span>}
+                                </p>}
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase font-bold text-neutral-500 mb-1.5">Séances d'entraînement</p>
+                            {data.seances.length === 0 && <p className="text-xs text-neutral-400">Aucune séance enregistrée.</p>}
+                            <ListeSeancesAnalysees analyses={bilan.analyses} />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {data && confirmResetEleve !== eleve.numero && (
                       <button onClick={() => setConfirmResetEleve(eleve.numero)} className="w-full text-center text-[11px] font-semibold text-rose-600/60 py-1.5">
@@ -2586,7 +2583,7 @@ export default function MuscuPro() {
             />
           )}
           {tab === "projet" && <Projet project={project} setProject={setProject} ateliersTous={ateliersTous} />}
-          {tab === "seance" && <SeanceHistorique project={project} seancesHistorique={seancesHistorique} onNouvelleSeance={handleNouvelleSeance} ateliersTous={ateliersTous} />}
+          {tab === "seance" && <SeanceHistorique project={project} seancesHistorique={seancesHistorique} onNouvelleSeance={handleNouvelleSeance} ateliersTous={ateliersTous} tests={historique} />}
           {tab === "suivi" && <Suivi project={project} profil={profil} historique={historique} onNouvelleEntree={handleNouvelleEntree} ateliersTous={ateliersTous} />}
           {tab === "convert" && <Convertisseur />}
           {tab === "chrono" && <ChronoRecup />}
