@@ -1,3 +1,15 @@
+v1.6.1 — Ajustements Projet et Suivi
+
+Projet
+- Le mobile R1 (force maximale) n'est plus proposé dans « Mon mobile, zone par zone » (choix R6 · R10 · R15 · R25)
+- Un ancien choix R1 déjà enregistré est retiré automatiquement à l'ouverture du projet
+
+Suivi
+- Le rameur, le vélo / elliptique et la corde à sauter (zone Cardio, y compris les ateliers perso classés en Cardio) ne figurent plus dans les tests de charge : pas de poids à soulever
+- Un petit message l'indique à l'élève si son projet contient des ateliers cardio
+
+Aucune modification des règles Firestore n'est nécessaire.
+
 v1.6.0 — Groupes classe et Fin d'année
 
 Groupes classe (Mode professeur)
