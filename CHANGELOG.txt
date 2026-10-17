@@ -1,3 +1,15 @@
+v1.9.0 — Note du bac (protocole du lycée) à côté de la note de suivi
+
+Mode professeur
+- Tableau « Notes de cycle » : nouvelle partie « Note du bac », calculée selon le type de bac de la classe. Pour chaque élève, tu choisis le degré puis la valeur dans la plage :
+  · Bac GT : élément 1 « produire » /8 (0-1,5 / 2-3,5 / 4-6 / 6,5-8) + élément 2 « ressentis et régulation » /4 (0-0,75 / 1-1,75 / 2-3 / 3,25-4) ; fil de séquence AFL 2 + AFL 3 (un rôle : coach ou observateur-pareur), points fixes
+  · Bac Pro : AFLP 1 /7 (0-1 / 1,5-3 / 3,5-5 / 5,5-7) + AFLP 2 /5 (0-0,5 / 1-2 / 2,5-4 / 4,5-5) ; fil de séquence AFLP 3 + AFLP 5, plages de points (AFLP 5 : degré conseillé d'après le nombre d'erreurs techniques)
+- Note de suivi /20 et note du bac affichées côte à côte : tu coches celle que tu retiens pour chaque élève. Les deux, avec le choix, sont ajoutées à l'export CSV
+- La note de suivi est calculée exactement comme avant ; les saisies du bac sont rangées à part dans les réglages de notation de la classe. Figer les notes fige aussi la note du bac
+
+Élève
+- Onglet Projet : rappel non bloquant des ateliers de l'épreuve selon le type de bac de sa classe (Bac Pro : soulevé de terre / rowing obligatoire + un 2e atelier de base ; Bac GT : au moins 2 ateliers parmi développé couché, demi-squat, tirage poulie haute, soulevé de terre / rowing)
+
 v1.8.0 — Type d'évaluation par classe : Bac GT ou Bac Pro
 
 Mode professeur

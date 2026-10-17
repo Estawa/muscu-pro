@@ -5,6 +5,7 @@ import {
   loadNotation, saveNotation,
 } from "./storage.js";
 import { bilanCycle, calculerNotesClasse, statsNotes, BAREMES_CONNAISSANCES, arrondi1 } from "./analyse.js";
+import NoteBacMuscu, { calculerNoteBacMuscu } from "./NoteBacMuscu.jsx";
 
 // ---------------------------------------------------------------------------
 // Notes de cycle — tableau de classe (Mode professeur, v1.7.0)
@@ -23,7 +24,7 @@ const parseNote = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-export default function NotationClasse({ prof, classe, mapping, onFermer }) {
+export default function NotationClasse({ prof, classe, mapping, typeBac = null, onFermer }) {
   const [chargement, setChargement] = useState(true);
   const [donnees, setDonnees] = useState({}); // numero -> { tests, seances, projet }
   const [reglages, setReglages] = useState(null);
@@ -147,12 +148,15 @@ export default function NotationClasse({ prof, classe, mapping, onFermer }) {
     const entetes = ["Nom", "Prénom", "Séances", "Conformité %", "Régulation %", "Progression %", "Assiduité %", "Score brut /100", "Suivi /20", `Suivi /${pe}`];
     if (Xe > 0) entetes.push(`Connaissances /${Xe}`);
     entetes.push("Note /20");
+    if (typeBac) entetes.push(`Bac ${typeBac === "gt" ? "GT" : "Pro"} /20`, "Note retenue");
     const nb = (x) => (x === null || x === undefined ? "" : String(arrondi1(x)).replace(".", ","));
     const lignesCSV = eleves.map((e) => {
       const l = ligneDe[e.numero];
       const b = bilans[e.numero];
       const comp = (fige && l?.composantes) || b?.composantes || {};
-      if (!l || l.exclu) return [e.nom, e.prenom, b?.nbSeances ?? "", "", "", "", "", "", "", "", ...(Xe > 0 ? [""] : []), "Exclu"];
+      if (!l || l.exclu) return [e.nom, e.prenom, b?.nbSeances ?? "", "", "", "", "", "", "", "", ...(Xe > 0 ? [""] : []), "Exclu", ...(typeBac ? ["", ""] : [])];
+      const bacTotal = typeBac ? calculerNoteBacMuscu(typeBac, reglages.bac?.[e.numero]).total : null;
+      const choix = reglages.noteRetenue?.[e.numero];
       const pc = (x) => (x === null || x === undefined ? "" : Math.round(x * 100));
       return [
         e.nom, e.prenom, (fige ? l.nbSeances : b?.nbSeances) ?? "",
@@ -160,6 +164,7 @@ export default function NotationClasse({ prof, classe, mapping, onFermer }) {
         nb(l.brut), nb(l.suivi20), nb(l.suiviPart),
         ...(Xe > 0 ? [nb(l.connaissances)] : []),
         nb(l.finale),
+        ...(typeBac ? [nb(bacTotal), choix === "bac" ? "Bac" : choix === "suivi" ? "Suivi" : ""] : []),
       ];
     });
     const echap = (v) => { const s = String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
@@ -335,6 +340,19 @@ export default function NotationClasse({ prof, classe, mapping, onFermer }) {
           </tbody>
         </table>
       </div>
+      {/* ---------------- Note du bac (v1.9.0) ---------------- */}
+      <NoteBacMuscu
+        typeBac={typeBac}
+        eleves={eleves}
+        noteSuivi={(num) => { const l = ligneDe[num]; return l && !l.exclu ? l.finale : null; }}
+        bac={reglages.bac || {}}
+        retenue={reglages.noteRetenue || {}}
+        exclus={reglages.exclus || []}
+        desactive={!!fige}
+        onMaj={(numero, patch) => setReglages((r) => ({ ...r, bac: { ...(r.bac || {}), [numero]: { ...((r.bac || {})[numero] || {}), ...patch } } }))}
+        onRetenue={(numero, choix) => setReglages((r) => ({ ...r, noteRetenue: { ...(r.noteRetenue || {}), [numero]: choix } }))}
+      />
+
       {lignesAffichees.some((l) => l.connaissancesManquante) && (
         <p className="text-[11px] text-rose-600">* note de connaissances non encore saisie (comptée 0 dans la note sur 20).</p>
       )}

@@ -29,6 +29,7 @@ function libelleTypeBac(valeur, long = false) {
 import { PCT_MOBILE, repsToPercent, instantaneAtelier, analyserSeances, bilanCycle } from "./analyse.js";
 import { ListeSeancesAnalysees, BilanCycle } from "./Bilans.jsx";
 import NotationClasse from "./NotationClasse.jsx";
+import { verifierAteliers } from "./bacMuscu.js";
 import ImportEleves from "./ImportEleves.jsx";
 import AjoutDepuisClasses from "./AjoutDepuisClasses.jsx";
 import FinAnnee from "./FinAnnee.jsx";
@@ -788,7 +789,8 @@ function Ateliers({ ateliersPerso, onAddAtelier, onUpdateAtelier, onDeleteAtelie
 // Écran : Projet individuel
 // ---------------------------------------------------------------------------
 
-function Projet({ project, setProject, ateliersTous }) {
+function Projet({ project, setProject, ateliersTous, typeBac = null }) {
+  const verif = verifierAteliers(typeBac, project.ateliers);
   const toggleAtelier = (nom) => {
     setProject((p) => {
       const exists = p.ateliers.includes(nom);
@@ -853,6 +855,12 @@ function Projet({ project, setProject, ateliersTous }) {
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">2. Mes ateliers ({project.ateliers.length})</p>
         </div>
+        {verif.message && (
+          <div className="flex gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3">
+            <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-800 leading-relaxed">{verif.message} (rappel pour l'épreuve, tu peux continuer)</p>
+          </div>
+        )}
         <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
           {ZONES.map((z) => {
             const zc = colorMap[z.color];
@@ -1978,6 +1986,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
               prof={profConnecte.nom}
               classe={classeChoisie}
               mapping={mapping}
+              typeBac={typesBac[classeChoisie] || null}
               onFermer={async () => { setNotesOuvert(false); setReglagesClasse(await loadNotation(profConnecte.nom, classeChoisie)); }}
             />
           )}
@@ -2369,6 +2378,7 @@ export default function MuscuPro() {
   const [project, setProject] = useState(PROJET_VIDE);
 
   const [profil, setProfil] = useState(null);
+  const [typeBacEleve, setTypeBacEleve] = useState(null); // v1.9.0 : type de bac de la classe de l'élève
   const [profilLoaded, setProfilLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [historique, setHistorique] = useState([]);
@@ -2382,6 +2392,12 @@ export default function MuscuPro() {
   useEffect(() => {
     loadAcces().then(setAcces);
   }, []);
+
+  // v1.9.0 : type de bac de la classe de l'élève (rappel des ateliers obligatoires dans son projet).
+  useEffect(() => {
+    if (!profil || profil.type !== "eleve" || !profil.prof || !profil.classe) { setTypeBacEleve(null); return; }
+    loadTypesBac(profil.prof).then((t) => setTypeBacEleve((t || {})[profil.classe] || null)).catch(() => {});
+  }, [profil?.type, profil?.prof, profil?.classe]);
 
   const profsDyn = [{ nom: acces.nomAdmin, pin: acces.pinAdmin }, ...(acces.collegues || [])];
 
@@ -2619,7 +2635,7 @@ export default function MuscuPro() {
               onDeleteAtelier={handleDeleteAtelier}
             />
           )}
-          {tab === "projet" && <Projet project={project} setProject={setProject} ateliersTous={ateliersTous} />}
+          {tab === "projet" && <Projet project={project} setProject={setProject} ateliersTous={ateliersTous} typeBac={typeBacEleve} />}
           {tab === "seance" && <SeanceHistorique project={project} seancesHistorique={seancesHistorique} onNouvelleSeance={handleNouvelleSeance} ateliersTous={ateliersTous} tests={historique} />}
           {tab === "suivi" && <Suivi project={project} profil={profil} historique={historique} onNouvelleEntree={handleNouvelleEntree} ateliersTous={ateliersTous} />}
           {tab === "convert" && <Convertisseur />}
