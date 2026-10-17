@@ -13,7 +13,19 @@ import {
   loadAteliersPerso, saveAteliersPerso, definirPinEleve, verifierPinEleve, appliquerImportClasse,
   modifierEleveMapping, supprimerEleveMapping, deplacerEleveMapping,
   loadGroupes, creerClasse, resynchroniserProfil, loadStudentProjetByNumero, loadNotation,
+  loadTypesBac, saveTypeBac,
 } from "./storage.js";
+
+// Type d'évaluation d'une classe (v1.8.0) : Bac général et technologique ou Bac professionnel
+const TYPES_BAC = [
+  { valeur: "gt", court: "Bac GT", long: "Bac général et technologique" },
+  { valeur: "pro", court: "Bac Pro", long: "Bac professionnel" },
+];
+function libelleTypeBac(valeur, long = false) {
+  const t = TYPES_BAC.find((x) => x.valeur === valeur);
+  if (!t) return "Type de bac à préciser";
+  return long ? t.long : t.court;
+}
 import { PCT_MOBILE, repsToPercent, instantaneAtelier, analyserSeances, bilanCycle } from "./analyse.js";
 import { ListeSeancesAnalysees, BilanCycle } from "./Bilans.jsx";
 import NotationClasse from "./NotationClasse.jsx";
@@ -1607,6 +1619,19 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
   const [messageGroupe, setMessageGroupe] = useState("");
   const [notesOuvert, setNotesOuvert] = useState(false);
   const [reglagesClasse, setReglagesClasse] = useState(null); // réglages de notation de la classe ouverte
+  const [typesBac, setTypesBac] = useState({}); // v1.8.0 : { [classe]: "gt" | "pro" }
+
+  useEffect(() => {
+    const nom = profConnecte?.nom;
+    if (!nom) return;
+    loadTypesBac(nom).then(setTypesBac);
+  }, [profConnecte?.nom]);
+
+  // Type d'évaluation d'une classe : seul ce réglage est enregistré, rien d'autre n'est touché.
+  const choisirTypeBac = async (classe, typeBac) => {
+    setTypesBac((t) => ({ ...t, [classe]: typeBac }));
+    try { await saveTypeBac(profConnecte.nom, classe, typeBac); } catch (e) { alert("Échec de l'enregistrement du type de bac : " + e.message); }
+  };
 
   useEffect(() => {
     if (profNom) {
@@ -1895,6 +1920,7 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
                 {groupes.includes(c) && <Users size={14} className="text-orange-600 shrink-0" />}
                 <span className="text-sm font-bold text-neutral-900 truncate">{c}</span>
                 {groupes.includes(c) && <span className="text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-500/10 rounded-full px-2 py-0.5 shrink-0">Groupe</span>}
+                <span className={`text-[10px] font-semibold shrink-0 ${typesBac[c] ? "text-neutral-500" : "text-rose-600"}`}>{libelleTypeBac(typesBac[c])}</span>
               </span>
               <ChevronRight size={16} className="text-neutral-400 shrink-0" />
             </button>
@@ -1933,6 +1959,17 @@ function ProfEspace({ profNom, onDeconnexion, profs = [] }) {
           {groupes.includes(classeChoisie) && (
             <p className="text-[11px] text-neutral-500 -mt-2 flex items-center gap-1"><Users size={11} /> Groupe classe</p>
           )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-[11px] font-semibold ${typesBac[classeChoisie] ? "text-neutral-600" : "text-rose-600"}`}>Évaluation : {libelleTypeBac(typesBac[classeChoisie], true)}</span>
+            <div className="flex gap-1">
+              {TYPES_BAC.map((t) => (
+                <button key={t.valeur} onClick={() => choisirTypeBac(classeChoisie, t.valeur)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${typesBac[classeChoisie] === t.valeur ? "bg-orange-500 text-neutral-50 border-orange-500" : "border-neutral-200 text-neutral-600 bg-white"}`}>
+                  {t.court}
+                </button>
+              ))}
+            </div>
+          </div>
           <button onClick={() => setNotesOuvert(true)} className="w-full flex items-center justify-center gap-2 bg-orange-500 text-neutral-50 rounded-xl py-2.5 text-xs font-bold">
             <ListChecks size={14} /> Notes de cycle — tableau de classe
           </button>

@@ -1,3 +1,10 @@
+v1.8.0 — Type d'évaluation par classe : Bac GT ou Bac Pro
+
+Mode professeur
+- Chaque classe (et chaque groupe classe) a un réglage « Bac GT » (général et technologique) ou « Bac Pro », choisi dans la classe ouverte, sous son nom ; le type s'affiche aussi dans la liste des classes
+- Données existantes intactes : le réglage est rangé à part (champ typesBac du document meta/classes-{prof}) ; élèves, tests, projets, séances et notes de cycle ne sont pas modifiés. Une classe sans réglage s'affiche « Type de bac à préciser »
+- La création et la suppression d'une classe ne réécrivent plus que la liste des classes et des groupes, ce qui préserve ce réglage
+
 v1.7.0 — Bilans de séance et notes de cycle
 
 Séances (élève et fiche élève du professeur)

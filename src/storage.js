@@ -126,8 +126,21 @@ async function removeClasseFromIndex(prof, classe) {
     await setDoc(doc(db, "meta", `classes-${slug(prof)}`), {
       list: (d.list || []).filter((c) => c !== classe),
       groupes: (d.groupes || []).filter((c) => c !== classe),
-    });
+    }, { mergeFields: ["list", "groupes"] }); // v1.8.0 : conserve les autres champs (typesBac)
   } catch (e) {}
+}
+
+// ---------- Type d'évaluation de chaque classe (v1.8.0) ----------
+// { [classe ou groupe]: "gt" | "pro" }, champ "typesBac" du document meta/classes-{prof}.
+// Une classe absente = type « à préciser » ; élèves, séances, tests et notes ne sont pas modifiés.
+export async function loadTypesBac(prof) {
+  try {
+    const snap = await getDoc(doc(db, "meta", `classes-${slug(prof)}`));
+    return snap.exists() ? (snap.data().typesBac || {}) : {};
+  } catch (e) { return {}; }
+}
+export async function saveTypeBac(prof, classe, typeBac) {
+  await setDoc(doc(db, "meta", `classes-${slug(prof)}`), { typesBac: { [classe]: typeBac } }, { merge: true });
 }
 
 // ---------- Classes et groupes classe ----------
@@ -161,7 +174,7 @@ export async function creerClasse(prof, nomSaisi, estGroupe) {
   const d = snap.exists() ? snap.data() : {};
   const list = [...(d.list || []), nom];
   const groupes = estGroupe ? [...(d.groupes || []), nom] : (d.groupes || []);
-  await setDoc(ref, { list, groupes });
+  await setDoc(ref, { list, groupes }, { mergeFields: ["list", "groupes"] }); // v1.8.0 : conserve typesBac
   await setDoc(doc(db, "mapping", classeDocId(prof, nom)), { students: [] });
   return { ok: true, nom };
 }
